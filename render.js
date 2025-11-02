@@ -16,7 +16,6 @@ function render() {
     const Page = router.get().getTarget() ?? NotFoundPage;
     // 일치하는 컴포넌트가 없을 시 NotFoundPage 를 Page에 저장
     // ??->Null, None일 때 false
-    // index.html 안의 root의 내용을 해당 컴포넌트로 바꿔줌
     $root.innerHTML = `
   <div class="max-w-[700px] mx-auto h-[100%] px-4">
     ${Header()}

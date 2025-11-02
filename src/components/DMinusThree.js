@@ -4,6 +4,7 @@ import TodoItemForDMinusThree from "./TodoItemForDMinusThree";
 
 const DMinusThree = () => {
   const todos = globalStore.getState().posts;
+  //globalStore에 저장된 더미데이터 불러옴
   const today = getDate();
 
   const getFilterData = () => {
