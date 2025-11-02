@@ -1,0 +1,16 @@
+# npm
+node_modules/
+package-lock.json
+
+# Build or cache
+dist/
+.vite/
+.cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
