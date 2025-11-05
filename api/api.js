@@ -1,4 +1,5 @@
 import axios from "axios";
+import devLogger from "../src/utils/logger.js";
 
 // 개발/프로덕션 환경에 따라 baseURL 자동 설정
 const api = axios.create({
@@ -6,14 +7,38 @@ const api = axios.create({
   withCredentials: true,
 });
 
+// 요청 인터셉터
+api.interceptors.request.use(
+  (config) => {
+    devLogger.api(config.method.toUpperCase(), config.url, config.data);
+    return config;
+  },
+  (error) => {
+    devLogger.apiError("Request Error", error);
+    return Promise.reject(error);
+  }
+);
+
+// 응답 인터셉터
+api.interceptors.response.use(
+  (response) => {
+    devLogger.apiResponse(response.config.url, response.data);
+    return response;
+  },
+  (error) => {
+    devLogger.apiError(error.config?.url || "Unknown", error.response || error);
+    return Promise.reject(error);
+  }
+);
+
 export default api;
 
 //테스트
 api
   .get("/api/test")
   .then((response) => {
-    console.log(response.data);
+    devLogger.log("Test API Response:", response.data);
   })
   .catch((error) => {
-    console.error(error);
+    devLogger.error("Test API Error:", error);
   });
