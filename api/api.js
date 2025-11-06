@@ -33,12 +33,14 @@ api.interceptors.response.use(
 
 export default api;
 
-//테스트
-api
-  .get("/api/test")
-  .then((response) => {
-    devLogger.log("Test API Response:", response.data);
-  })
-  .catch((error) => {
-    devLogger.error("Test API Error:", error);
-  });
+// 개발 모드에서 테스트 실행
+if (import.meta.env.DEV || import.meta.env.MODE === "development") {
+  api
+    .get("/api/test")
+    .then((response) => {
+      devLogger.log("Test API Response:", response.data);
+    })
+    .catch((error) => {
+      devLogger.error("Test API Error:", error);
+    });
+}
