@@ -1,4 +1,6 @@
 import { globalStore } from "../stores/globalStore";
+import { isAuthenticated } from "../utils/auth";
+import { updateTodo } from "../../api/todos";
 import closeModalEventHandler from "./closeModalEventHandler";
 
 const setInputValuesForUpdateTodoItem = () => {
@@ -48,25 +50,50 @@ const isValidFormForUpdate = (deadLine, content) => {
   return true;
 };
 
-const updateTodoItemEventHandler = (e) => {
+const updateTodoItemEventHandler = async (e) => {
   const updateCheck = confirm("수정하시겠습니까?");
   const id = Number(e.target.dataset.todoId);
   if (!id) return;
+
   //수정 모달의 입력된 각 값을 가져옴
   const { deadLine, content, isDone } = setInputValuesForUpdateTodoItem();
-  //가져온 값으로 해당 id의 todo를 업데이트한 todos를 가져옴
-
-  const updatedTodos = updateTodos({
-    id,
-    deadLine,
-    isDone,
-    content,
-  });
 
   if (!isValidFormForUpdate(deadLine, content)) return;
 
-  if (updateCheck) {
-    //업데이트된 todos로 globalStore를 수정
+  if (!updateCheck) {
+    closeModalEventHandler();
+    return;
+  }
+
+  // 로그인 상태에 따라 분기
+  if (isAuthenticated()) {
+    // 로그인 상태 → DB에 저장 (API 호출)
+    try {
+      const response = await updateTodo(id, {
+        deadLine,
+        content,
+        isDone,
+      });
+
+      // DB에서 반환된 Todo로 업데이트
+      const updatedTodo = response.data.data;
+      const todos = globalStore.getState().posts;
+      const updatedTodos = todos.map((todo) =>
+        todo.id === id ? updatedTodo : todo
+      );
+      setTodoStoreByUpdatedTodoItem(updatedTodos);
+    } catch (error) {
+      alert("⚠️Todo 수정에 실패했습니다.");
+      return;
+    }
+  } else {
+    // 비로그인 상태 → 로컬에만 저장 (기존 방식)
+    const updatedTodos = updateTodos({
+      id,
+      deadLine,
+      isDone,
+      content,
+    });
     setTodoStoreByUpdatedTodoItem(updatedTodos);
   }
 

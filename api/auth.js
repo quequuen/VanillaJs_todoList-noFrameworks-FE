@@ -2,9 +2,9 @@
 import api from "./api";
 
 const AUTH_ENDPOINTS = {
-  sendMagicLink: "", // TODO: 엔드포인트 설정
-  verifyMagicLink: "", // TODO: 엔드포인트 설정
-  logout: "", // TODO: 엔드포인트 설정
+  sendMagicLink: "/api/auth/send-magic-link",
+  verifyMagicLink: "/api/auth/verify",
+  logout: "/api/auth/logout",
 };
 
 const resolveEndpoint = (key) => {

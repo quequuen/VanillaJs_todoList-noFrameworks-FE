@@ -1,4 +1,6 @@
 import { globalStore } from "../stores/globalStore";
+import { isAuthenticated } from "../utils/auth";
+import { createTodo } from "../../api/todos";
 import getDate from "../utils/getDate";
 
 const setInputValuesForAddTodoItem = () => {
@@ -42,21 +44,54 @@ const isValidFormForAdd = (date, content) => {
   return true;
 };
 
-const addTodoItemEventHandler = (e) => {
+// const addTodoItemEventHandler = (e) => {
+//   e.preventDefault();
+//   const todos = globalStore.getState().posts;
+//   //setInputValuesForAddTodoItem() 호출로 DOM 요소의 값과 그 자체를 각각 변수에 할당 후 리턴(구조 분해 할당 사용)
+//   const { date, content, $date, $content } = setInputValuesForAddTodoItem();
+
+//   if (!isValidFormForAdd(date, content)) return;
+
+//   // 구조 분해 할당으로 가져온 date와 content를 createTodoItem의 인수로 주고 객체를 생성한 후 newTodo에 할당
+//   const newTodo = createTodoItem(todos.length + 1, date, content);
+
+//   // newTodo 데이터 저장
+//   setTodoStoreByAddTodoItem(newTodo);
+
+//   // 입력 초기화
+//   resetTodoForm($date, $content);
+// };
+
+const addTodoItemEventHandler = async (e) => {
   e.preventDefault();
   const todos = globalStore.getState().posts;
-  //setInputValuesForAddTodoItem() 호출로 DOM 요소의 값과 그 자체를 각각 변수에 할당 후 리턴(구조 분해 할당 사용)
   const { date, content, $date, $content } = setInputValuesForAddTodoItem();
 
   if (!isValidFormForAdd(date, content)) return;
 
-  // 구조 분해 할당으로 가져온 date와 content를 createTodoItem의 인수로 주고 객체를 생성한 후 newTodo에 할당
   const newTodo = createTodoItem(todos.length + 1, date, content);
 
-  // newTodo 데이터 저장
-  setTodoStoreByAddTodoItem(newTodo);
+  // 로그인 상태에 따라 분기
+  if (isAuthenticated()) {
+    // 로그인 상태 → DB에 저장 (API 호출)
+    try {
+      const response = await createTodo({
+        deadLine: date,
+        content: content,
+      });
 
-  // 입력 초기화
+      // DB에서 반환된 Todo로 업데이트
+      const savedTodo = response.data.data;
+      setTodoStoreByAddTodoItem(savedTodo);
+    } catch (error) {
+      alert("⚠️Todo 저장에 실패했습니다.");
+      return;
+    }
+  } else {
+    // 비로그인 상태 → 로컬에만 저장 (기존 방식)
+    setTodoStoreByAddTodoItem(newTodo);
+  }
+
   resetTodoForm($date, $content);
 };
 
