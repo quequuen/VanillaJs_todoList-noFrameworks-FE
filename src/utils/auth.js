@@ -39,7 +39,24 @@ export const handleMagicLinkToken = async () => {
 
       return { success: true, user };
     } catch (error) {
-      return { success: false, error };
+      // 에러 응답 처리
+      let errorMessage = "인증에 실패했습니다.";
+
+      if (error.response?.status === 401 || error.response?.status === 400) {
+        const errorData = error.response.data;
+        if (errorData?.message) {
+          if (Array.isArray(errorData.message)) {
+            errorMessage = errorData.message.join(", ");
+          } else {
+            errorMessage = errorData.message;
+          }
+        } else if (errorData?.error) {
+          errorMessage = errorData.error;
+        }
+      }
+
+      console.error("매직링크 인증 에러:", errorMessage);
+      return { success: false, error: { message: errorMessage } };
     }
   }
 

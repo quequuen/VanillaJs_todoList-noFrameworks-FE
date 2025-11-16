@@ -1,5 +1,6 @@
 import { logout } from "../../../api/auth";
 import { clearUser } from "../../utils/auth";
+import { router } from "../../../router";
 
 const logoutEventHandler = async () => {
   const confirmLogout = confirm("로그아웃하시겠습니까?");

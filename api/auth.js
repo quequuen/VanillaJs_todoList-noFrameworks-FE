@@ -2,8 +2,8 @@
 import api from "./api";
 
 const AUTH_ENDPOINTS = {
-  sendMagicLink: "/api/auth/send-magic-link",
-  verifyMagicLink: "/api/auth/verify",
+  sendMagicLink: "/magic-link/send",
+  verifyMagicLink: "/magic-link/verify",
   logout: "/api/auth/logout",
 };
 
@@ -16,7 +16,6 @@ const resolveEndpoint = (key) => {
 };
 
 export const sendMagicLink = async (email) => {
-  // TODO: payload 구조 확정 후 구현 세부화
   return api.post(resolveEndpoint("sendMagicLink"), { email });
 };
 

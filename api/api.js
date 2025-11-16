@@ -31,9 +31,19 @@ api.interceptors.response.use(
       // 서버 응답이 있는 경우
       const { status, data } = error.response;
 
+      // 에러 메시지 추출 (NestJS 형식 지원)
+      let errorMessage =
+        data?.error || data?.message || "서버 오류가 발생했습니다.";
+
+      if (Array.isArray(errorMessage)) {
+        // ValidationPipe 에러 형식: ["field must be...", ...]
+        errorMessage = errorMessage.join(", ");
+      }
+
       devLogger.apiError(error.config?.url || "Unknown", {
         status,
-        message: data?.error || data?.message || "서버 오류가 발생했습니다.",
+        statusCode: data?.statusCode || status,
+        message: errorMessage,
         data,
       });
 
@@ -43,6 +53,11 @@ api.interceptors.response.use(
         import("../src/utils/auth.js").then(({ clearUser }) => {
           clearUser();
         });
+      }
+
+      // 429 에러 (Rate Limiting) 처리
+      if (status === 429) {
+        devLogger.warn("Rate Limiting: 요청이 너무 많습니다.");
       }
     } else if (error.request) {
       // 요청은 보냈지만 응답을 받지 못한 경우 (네트워크 에러)
