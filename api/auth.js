@@ -20,8 +20,7 @@ export const sendMagicLink = async (email) => {
 };
 
 export const verifyMagicLink = async (token) => {
-  // TODO: 토큰 검증 로직 구현 세부화
-  return api.get(resolveEndpoint("verifyMagicLink"), { params: { token } });
+  return api.post(resolveEndpoint("verifyMagicLink"), { token });
 };
 
 export const logout = async () => {
