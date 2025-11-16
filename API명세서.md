@@ -74,7 +74,7 @@
 
 ### 2. 매직링크 인증
 
-**엔드포인트**: `GET /api/auth/verify?token={token}`
+**엔드포인트**: `GET /api/auth/verify-api?token={token}`
 
 **인증 필요**: 없음 (토큰으로 인증)
 

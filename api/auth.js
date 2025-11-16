@@ -3,7 +3,7 @@ import api from "./api";
 
 const AUTH_ENDPOINTS = {
   sendMagicLink: "/api/auth/send-magic-link",
-  verifyMagicLink: "/api/auth/verify",
+  verifyMagicLink: "/api/auth/verify-api",
   logout: "/api/auth/logout",
   getCurrentUser: "/api/auth/me",
 };
