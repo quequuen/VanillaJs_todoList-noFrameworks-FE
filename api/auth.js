@@ -2,9 +2,10 @@
 import api from "./api";
 
 const AUTH_ENDPOINTS = {
-  sendMagicLink: "/magic-link/send",
-  verifyMagicLink: "/magic-link/verify",
+  sendMagicLink: "/api/auth/send-magic-link",
+  verifyMagicLink: "/api/auth/verify",
   logout: "/api/auth/logout",
+  getCurrentUser: "/api/auth/me",
 };
 
 const resolveEndpoint = (key) => {
@@ -20,16 +21,30 @@ export const sendMagicLink = async (email) => {
 };
 
 export const verifyMagicLink = async (token) => {
-  return api.post(resolveEndpoint("verifyMagicLink"), { token });
+  return api.get(resolveEndpoint("verifyMagicLink"), { params: { token } });
 };
 
 export const logout = async () => {
-  // TODO: 로그아웃 로직 구현 세부화
   return api.post(resolveEndpoint("logout"));
+};
+
+// 현재 로그인한 사용자 정보 조회 (세션 쿠키 기반)
+export const getCurrentUser = async () => {
+  try {
+    const response = await api.get(resolveEndpoint("getCurrentUser"));
+    return response.data;
+  } catch (error) {
+    // 401 에러면 로그인 안 된 상태
+    if (error.response?.status === 401) {
+      return null;
+    }
+    throw new Error("사용자 정보를 가져올 수 없습니다.");
+  }
 };
 
 export default {
   sendMagicLink,
   verifyMagicLink,
   logout,
+  getCurrentUser,
 };

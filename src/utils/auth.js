@@ -21,6 +21,26 @@ export const clearUser = () => {
   globalStore.setState({ user: null });
 };
 
+// 현재 로그인한 사용자 정보 조회 (세션 쿠키 기반)
+export const getCurrentUser = async () => {
+  try {
+    const { getCurrentUser: getCurrentUserAPI } = await import(
+      "../../api/auth.js"
+    );
+    const user = await getCurrentUserAPI();
+
+    if (user) {
+      setUser(user);
+      return user;
+    }
+
+    return null;
+  } catch (error) {
+    console.error("사용자 정보 조회 실패:", error);
+    return null;
+  }
+};
+
 // 매직링크 토큰 처리 (URL에서 token 파싱)
 export const handleMagicLinkToken = async () => {
   const urlParams = new URLSearchParams(window.location.search);
