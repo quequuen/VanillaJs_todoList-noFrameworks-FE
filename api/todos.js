@@ -2,12 +2,12 @@
 import api from "./api";
 
 const TODO_ENDPOINTS = {
-  list: "/api/todos",
-  detail: "/api/todos", // /api/todos/:id로 사용
-  create: "/api/todos",
-  update: "/api/todos", // /api/todos/:id로 사용
-  remove: "/api/todos", // /api/todos/:id로 사용
-  toggle: "/api/todos", // /api/todos/:id/toggle로 사용
+  list: "/api/todo",
+  detail: "/api/todo", // /api/todos/:id로 사용
+  create: "/api/todo",
+  update: "/api/todo", // /api/todos/:id로 사용
+  remove: "/api/todo", // /api/todos/:id로 사용
+  toggle: "/api/todo", // /api/todos/:id/toggle로 사용
 };
 
 const resolveEndpoint = (key) => {
@@ -26,12 +26,12 @@ export const getTodoById = async (id) => {
   return api.get(`${resolveEndpoint("detail")}/${id}`);
 };
 
-export const createTodo = async (payload) => {
-  return api.post(resolveEndpoint("create"), payload);
+export const createTodo = async (params) => {
+  return api.post(resolveEndpoint("create"), params);
 };
 
-export const updateTodo = async (id, payload) => {
-  return api.put(`${resolveEndpoint("update")}/${id}`, payload);
+export const updateTodo = async (id, params) => {
+  return api.put(`${resolveEndpoint("update")}/${id}`, params);
 };
 
 export const deleteTodo = async (id) => {
