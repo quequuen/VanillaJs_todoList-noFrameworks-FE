@@ -21,6 +21,11 @@ const TodoList = () => {
 
   const paginatedTodos = paginate(getTodoList(), startIdx, endIdx);
 
+  // undefined나 유효하지 않은 todo 필터링
+  const validTodos = paginatedTodos.filter(
+    (todo) => todo && typeof todo === "object" && todo.id
+  );
+
   return `
   <p class="mt-16 flex justify-center italic text-blue-700 text-4xl font-extrabold">TO DO LIST</p>
     <div class="List h-[60%]">
@@ -29,7 +34,7 @@ const TodoList = () => {
         </div>
         <div class="lists block h-[100%]">
           <div id="todoList" class="h-[80%]">
-            ${paginatedTodos.map((todo) => TodoItem(todo)).join("")}
+            ${validTodos.map((todo) => TodoItem(todo)).join("")}
           </div>
           <div id="paging" class="flex justify-center">
              ${PagingButtons(getTodoList(), itemsPerPage, currentPage)}

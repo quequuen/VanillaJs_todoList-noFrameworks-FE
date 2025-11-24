@@ -77,10 +77,34 @@ const updateTodoItemEventHandler = async (e) => {
       });
 
       // DB에서 반환된 Todo로 업데이트
-      const updatedTodo = response.data.data;
+      // 백엔드 응답 형식에 맞게 처리 (response.data.data 또는 response.data)
+      const updatedTodo = response?.data?.data || response?.data;
+
+      // 응답 데이터가 유효한지 확인
+      if (!updatedTodo || typeof updatedTodo !== "object") {
+        console.error(
+          "❌ 백엔드 응답 형식이 올바르지 않습니다:",
+          response?.data
+        );
+        alert(
+          "Todo 수정은 성공했지만 데이터를 불러오는데 실패했습니다. 페이지를 새로고침해주세요."
+        );
+        closeModalEventHandler();
+        return;
+      }
+
+      // 백엔드 응답 필드를 프론트엔드 형식에 맞게 매핑
+      const mappedTodo = {
+        id: updatedTodo.id,
+        deadLine: updatedTodo.deadLine || updatedTodo.deadline || deadLine,
+        content: updatedTodo.content || updatedTodo.title || content,
+        creation: updatedTodo.creation || updatedTodo.createdAt,
+        isDone: updatedTodo.isDone || updatedTodo.is_done || isDone,
+      };
+
       const todos = globalStore.getState().posts;
       const updatedTodos = todos.map((todo) =>
-        todo.id === id ? updatedTodo : todo
+        todo.id === id ? mappedTodo : todo
       );
       setTodoStoreByUpdatedTodoItem(updatedTodos);
     } catch (error) {

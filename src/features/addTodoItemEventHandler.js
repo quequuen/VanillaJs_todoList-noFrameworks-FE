@@ -82,8 +82,34 @@ const addTodoItemEventHandler = async (e) => {
       });
 
       // DB에서 반환된 Todo로 업데이트
-      const savedTodo = response.data.data;
-      setTodoStoreByAddTodoItem(savedTodo);
+      // 백엔드 응답 형식에 맞게 처리 (response.data.data 또는 response.data)
+      const savedTodo = response?.data?.data || response?.data;
+
+      // 응답 데이터가 유효한지 확인
+      if (!savedTodo || typeof savedTodo !== "object") {
+        console.error(
+          "❌ 백엔드 응답 형식이 올바르지 않습니다:",
+          response?.data
+        );
+        alert(
+          "Todo 추가는 성공했지만 데이터를 불러오는데 실패했습니다. 페이지를 새로고침해주세요."
+        );
+        // 에러 발생 시에도 폼은 초기화
+        resetTodoForm($date, $content);
+        return;
+      }
+
+      // 백엔드 응답 필드를 프론트엔드 형식에 맞게 매핑
+      // 백엔드가 다른 필드명을 사용할 수 있으므로 안전하게 처리
+      const mappedTodo = {
+        id: savedTodo.id,
+        deadLine: savedTodo.deadLine || savedTodo.deadline || date,
+        content: savedTodo.content || savedTodo.title || content,
+        creation: savedTodo.creation || savedTodo.createdAt || getDate(),
+        isDone: savedTodo.isDone || savedTodo.is_done || "N",
+      };
+
+      setTodoStoreByAddTodoItem(mappedTodo);
     } catch (error) {
       handleTodoError(error);
       return;
