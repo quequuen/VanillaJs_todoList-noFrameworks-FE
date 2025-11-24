@@ -4,7 +4,7 @@ import getPath from "./getPath";
 import { getTodos } from "../../api/todos";
 import devLogger from "./logger";
 
-const getFilterData = () => {
+const getFilterData = (todos) => {
   const path = getPath();
   const today = getDate();
   return path === "/" ? todos.filter((todo) => todo.deadLine === today) : todos;
@@ -31,6 +31,6 @@ const getTodoList = async (e) => {
     devLogger.log(todos);
     alert(message);
   }
-  return sortTodosToPath(getFilterData());
+  return sortTodosToPath(getFilterData(todos));
 };
 export default getTodoList;

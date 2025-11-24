@@ -1,10 +1,9 @@
 import getDate from "../utils/getDate";
-import { globalStore } from "../stores/globalStore";
 import TodoItemForDMinusThree from "./TodoItemForDMinusThree";
 
 const DMinusThree = () => {
-  const todos = globalStore.getState().posts;
-  //globalStore에 저장된 더미데이터 불러옴
+  const todos = getTodoList();
+  //getTodoList()로 서버에서 전달받은 데이터 사용
   const today = getDate();
 
   const getFilterData = () => {
