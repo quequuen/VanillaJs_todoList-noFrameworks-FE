@@ -100,77 +100,37 @@ export const getCurrentUser = async () => {
   }
 };
 
-// 매직링크 토큰 처리 (URL에서 token 파싱)
-export const handleMagicLinkToken = async () => {
+// 매직링크 토큰 처리 (백엔드 redirect 방식)
+// 백엔드에서 /api/auth/verify?token=xxx로 접근하면
+// 세션 생성 후 프론트엔드로 redirect(?success=true 또는 ?error=메시지)
+// 이 함수는 success 파라미터가 있을 때 사용자 정보를 가져옴
+export const handleMagicLinkSuccess = async () => {
   const urlParams = new URLSearchParams(window.location.search);
-  const token = urlParams.get("token");
+  const success = urlParams.get("success");
 
-  if (token) {
-    // 토큰이 있으면 인증 시도
+  if (success === "true") {
     try {
-      const { verifyMagicLink } = await import("../../api/auth.js");
-      console.log("🔐 매직링크 토큰 검증 시작:", token);
-      const response = await verifyMagicLink(token);
-      const user = response.data.user;
-      console.log("✅ 매직링크 인증 성공:", user);
-      setUser(user);
+      console.log("✅ 매직링크 인증 성공 - 사용자 정보 조회 중...");
 
-      // 세션 쿠키가 설정되었는지 확인하기 위해 잠시 대기
-      // 백엔드에서 세션 쿠키를 설정하는데 시간이 걸릴 수 있음
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // 백엔드에서 이미 세션 쿠키가 설정되었으므로 getCurrentUser로 사용자 정보 가져오기
+      // getCurrentUser 내부에서 setUser, fetchTodosFromDB를 자동으로 처리함
+      const user = await getCurrentUser();
 
-      // 쿠키 확인
-      const cookies = document.cookie;
-      console.log("🍪 verify-api 호출 후 쿠키 상태:", cookies || "쿠키 없음");
-
-      // 세션 쿠키 확인을 위해 getCurrentUser 호출 (내부 함수 직접 호출하여 중복 방지)
-      const { getCurrentUser: getCurrentUserAPI } = await import(
-        "../../api/auth.js"
-      );
-      const verifiedUser = await getCurrentUserAPI();
-
-      if (!verifiedUser || !verifiedUser.id || !verifiedUser.email) {
-        console.error(
-          "❌ 세션 쿠키가 설정되지 않았거나 세션 데이터가 없습니다. 백엔드 세션 스토어를 확인해주세요."
-        );
-        console.error("❌ 응답 데이터:", verifiedUser);
-        alert(
-          "로그인은 성공했지만 세션 설정에 실패했습니다. 페이지를 새로고침해주세요."
-        );
-        return { success: false, error: { message: "세션 설정 실패" } };
+      if (!user || !user.id || !user.email) {
+        console.error("❌ 사용자 정보를 가져올 수 없습니다.");
+        alert("로그인은 성공했지만 사용자 정보를 가져오는데 실패했습니다.");
+        return { success: false, error: { message: "사용자 정보 조회 실패" } };
       }
 
-      // 세션 확인 성공 시 사용자 정보 저장
-      setUser(verifiedUser);
-
-      // 로그인 성공 시 DB에서 todos 가져오기
-      await fetchTodosFromDB();
-
-      // URL에서 token 제거
+      // URL에서 success 파라미터 제거
       window.history.replaceState({}, "", window.location.pathname);
 
       return { success: true, user };
     } catch (error) {
-      // 에러 응답 처리
-      let errorMessage = "인증에 실패했습니다.";
-
-      if (error.response?.status === 401 || error.response?.status === 400) {
-        const errorData = error.response.data;
-        if (errorData?.message) {
-          if (Array.isArray(errorData.message)) {
-            errorMessage = errorData.message.join(", ");
-          } else {
-            errorMessage = errorData.message;
-          }
-        } else if (errorData?.error) {
-          errorMessage = errorData.error;
-        }
-      }
-
-      console.error("매직링크 인증 에러:", errorMessage);
-      return { success: false, error: { message: errorMessage } };
+      console.error("매직링크 인증 후 사용자 정보 조회 에러:", error);
+      return { success: false, error: { message: "사용자 정보 조회 실패" } };
     }
   }
 
-  return null; // token이 없으면 null 반환
+  return null; // success 파라미터가 없으면 null 반환
 };

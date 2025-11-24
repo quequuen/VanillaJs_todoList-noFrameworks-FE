@@ -4,7 +4,7 @@ import { createRouter } from "./lib/createRouter.js";
 import AllTodosPage from "./pages/AllTodosPage.js";
 import HomePage from "./pages/HomePage.js";
 import { globalStore } from "./stores/globalStore.js";
-import { handleMagicLinkToken } from "./utils/auth.js";
+import { handleMagicLinkSuccess } from "./utils/auth.js";
 
 router.set(
   createRouter({
@@ -19,12 +19,20 @@ async function main() {
   const success = urlParams.get("success");
   const error = urlParams.get("error");
 
-  if (success) {
-    // 성공 메시지 표시
-    alert(decodeURIComponent(success));
+  // 매직링크 인증 성공 처리 (백엔드에서 redirect로 온 경우)
+  let magicLinkProcessed = false;
+  if (success === "true") {
+    try {
+      const result = await handleMagicLinkSuccess();
+      magicLinkProcessed = !!result; // success가 처리되었는지 확인
 
-    // URL 정리 (보안)
-    window.history.replaceState({}, "", window.location.pathname);
+      if (result?.success) {
+        // 성공 메시지는 handleMagicLinkSuccess 내부에서 처리
+        console.log("✅ 매직링크 인증 완료");
+      }
+    } catch (err) {
+      console.error("매직링크 인증 처리 중 에러:", err);
+    }
   }
 
   if (error) {
@@ -35,16 +43,8 @@ async function main() {
     window.history.replaceState({}, "", window.location.pathname);
   }
 
-  // 기존 매직링크 토큰 처리 (백엔드가 리다이렉트하지 않는 경우 대비)
-  let magicLinkProcessed = false;
-  try {
-    const result = await handleMagicLinkToken();
-    magicLinkProcessed = !!result; // token이 처리되었는지 확인
-  } catch (err) {
-    console.error("매직링크 토큰 처리 중 에러:", err);
-  }
-
-  // 매직링크 토큰이 처리되지 않은 경우에만 getCurrentUser 호출
+  // 매직링크 인증이 처리되지 않은 경우에만 getCurrentUser 호출
+  // (일반적인 앱 시작 시 로그인 상태 확인)
   if (!magicLinkProcessed) {
     // 앱 시작 시 항상 로그인 상태 확인 및 todos 가져오기
     // getCurrentUser 내부에서 setUser, fetchTodosFromDB, clearUser를 자동으로 처리함
