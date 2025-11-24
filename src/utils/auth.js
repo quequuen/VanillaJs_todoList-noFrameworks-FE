@@ -68,6 +68,10 @@ export const fetchTodosFromDB = async () => {
 // 현재 로그인한 사용자 정보 조회 (세션 쿠키 기반)
 export const getCurrentUser = async () => {
   try {
+    // 쿠키 확인
+    const cookies = document.cookie;
+    console.log("🍪 /api/auth/me 호출 전 쿠키 상태:", cookies || "쿠키 없음");
+
     const { getCurrentUser: getCurrentUserAPI } = await import(
       "../../api/auth.js"
     );
@@ -85,6 +89,7 @@ export const getCurrentUser = async () => {
     console.warn(
       "⚠️ getCurrentUser: user가 null입니다. 세션 쿠키가 없거나 만료되었을 수 있습니다."
     );
+    console.warn("⚠️ 현재 쿠키:", cookies || "쿠키 없음");
     clearUser();
     return null;
   } catch (error) {
@@ -113,6 +118,10 @@ export const handleMagicLinkToken = async () => {
       // 세션 쿠키가 설정되었는지 확인하기 위해 잠시 대기
       // 백엔드에서 세션 쿠키를 설정하는데 시간이 걸릴 수 있음
       await new Promise((resolve) => setTimeout(resolve, 200));
+
+      // 쿠키 확인
+      const cookies = document.cookie;
+      console.log("🍪 verify-api 호출 후 쿠키 상태:", cookies || "쿠키 없음");
 
       // 세션 쿠키 확인을 위해 getCurrentUser 호출
       const verifiedUser = await getCurrentUser();

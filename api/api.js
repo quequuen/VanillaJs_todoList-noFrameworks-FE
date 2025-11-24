@@ -11,6 +11,17 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     devLogger.api(config.method.toUpperCase(), config.url, config.data);
+
+    // 쿠키 확인 (개발 모드에서만)
+    if (import.meta.env.DEV || import.meta.env.MODE === "development") {
+      const cookies = document.cookie;
+      if (cookies) {
+        console.log("🍪 Request Cookies:", cookies);
+      } else {
+        console.warn("⚠️ Request에 쿠키가 없습니다.");
+      }
+    }
+
     return config;
   },
   (error) => {
@@ -23,6 +34,23 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => {
     devLogger.apiResponse(response.config.url, response.data);
+
+    // Set-Cookie 헤더 확인 (개발 모드에서만)
+    if (import.meta.env.DEV || import.meta.env.MODE === "development") {
+      const setCookieHeader = response.headers["set-cookie"];
+      if (setCookieHeader) {
+        console.log("✅ Response Set-Cookie:", setCookieHeader);
+      }
+
+      // 현재 쿠키 상태 확인
+      const cookies = document.cookie;
+      if (cookies) {
+        console.log("🍪 Current Cookies:", cookies);
+      } else {
+        console.warn("⚠️ 쿠키가 설정되지 않았습니다.");
+      }
+    }
+
     return response;
   },
   (error) => {
