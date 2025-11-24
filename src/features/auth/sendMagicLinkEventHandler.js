@@ -1,5 +1,6 @@
 import { sendMagicLink } from "../../../api/auth";
 import closeModalEventHandler from "../closeModalEventHandler";
+import { handleApiError } from "../../utils/errorHandler";
 
 const setInputValueForLogin = () => {
   const $email = document.getElementById("loginEmail");
@@ -46,7 +47,7 @@ const sendMagicLinkEventHandler = async (e) => {
       closeModalEventHandler();
     }, 3000);
   } catch (error) {
-    // Rate Limiting 에러 처리
+    // Rate Limiting 에러 처리 (429)
     if (error.response?.status === 429) {
       const retryAfter = error.response.headers?.["retry-after"];
       const message = retryAfter
@@ -65,34 +66,21 @@ const sendMagicLinkEventHandler = async (e) => {
       return;
     }
 
-    // Validation 에러 처리 (400)
-    if (error.response?.status === 400) {
-      const errorData = error.response.data;
-      let errorMessage = "이메일 발송에 실패했습니다.";
-
-      // 에러 응답 형식 처리
-      if (errorData?.message) {
-        if (Array.isArray(errorData.message)) {
-          // NestJS ValidationPipe 형식: ["email must be an email", ...]
-          errorMessage = errorData.message.join(", ");
-        } else {
-          // 일반 메시지 형식
-          errorMessage = errorData.message;
-        }
-      } else if (errorData?.error) {
-        errorMessage = errorData.error;
-      }
-
-      showMessage(errorMessage, true);
-      return;
-    }
-
-    // 기타 에러
-    const errorMessage =
-      error.response?.data?.message ||
-      error.response?.data?.error ||
-      "이메일 발송에 실패했습니다. 다시 시도해주세요.";
-    showMessage(errorMessage, true);
+    // Error.md 명세에 따른 에러 처리
+    handleApiError(error, {
+      on400: (message) => {
+        showMessage(message, true);
+      },
+      on500: (message) => {
+        showMessage(
+          "이메일 발송에 실패했습니다. 잠시 후 다시 시도해주세요.",
+          true
+        );
+      },
+      defaultHandler: (message) => {
+        showMessage(message, true);
+      },
+    });
   }
 };
 

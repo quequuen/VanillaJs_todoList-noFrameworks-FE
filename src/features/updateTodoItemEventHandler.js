@@ -2,6 +2,7 @@ import { globalStore } from "../stores/globalStore";
 import { isAuthenticated } from "../utils/auth";
 import { updateTodo } from "../../api/todos";
 import closeModalEventHandler from "./closeModalEventHandler";
+import { handleTodoError } from "../utils/errorHandler";
 
 const setInputValuesForUpdateTodoItem = () => {
   const $updatedTodoItemContent = document.getElementById(
@@ -83,7 +84,7 @@ const updateTodoItemEventHandler = async (e) => {
       );
       setTodoStoreByUpdatedTodoItem(updatedTodos);
     } catch (error) {
-      alert("⚠️Todo 수정에 실패했습니다.");
+      handleTodoError(error);
       return;
     }
   } else {

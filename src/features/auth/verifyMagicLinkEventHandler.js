@@ -1,6 +1,7 @@
 import { verifyMagicLink } from "../../../api/auth";
 import { setUser } from "../../utils/auth";
 import { router } from "../../../router";
+import { handleAuthError } from "../../utils/errorHandler";
 
 const verifyMagicLinkEventHandler = async (token) => {
   try {
@@ -15,7 +16,7 @@ const verifyMagicLinkEventHandler = async (token) => {
 
     alert("로그인되었습니다!");
   } catch (error) {
-    alert("인증에 실패했습니다. 다시 시도해주세요.");
+    handleAuthError(error);
   }
 };
 

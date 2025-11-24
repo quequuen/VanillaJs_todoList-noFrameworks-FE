@@ -2,6 +2,7 @@ import { globalStore } from "../stores/globalStore";
 import { isAuthenticated } from "../utils/auth";
 import { createTodo } from "../../api/todos";
 import getDate from "../utils/getDate";
+import { handleTodoError } from "../utils/errorHandler";
 
 const setInputValuesForAddTodoItem = () => {
   const $date = document.getElementById("todoDate");
@@ -84,7 +85,7 @@ const addTodoItemEventHandler = async (e) => {
       const savedTodo = response.data.data;
       setTodoStoreByAddTodoItem(savedTodo);
     } catch (error) {
-      alert("⚠️Todo 저장에 실패했습니다.");
+      handleTodoError(error);
       return;
     }
   } else {

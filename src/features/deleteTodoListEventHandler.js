@@ -1,6 +1,7 @@
 import { globalStore } from "../stores/globalStore";
 import { isAuthenticated } from "../utils/auth";
 import { deleteTodo } from "../../api/todos";
+import { handleTodoError } from "../utils/errorHandler";
 
 //해당 id인 todoList를 모든 리스트에서 제거한 리스트 반환
 const deleteTodoList = (todos, id) => {
@@ -26,7 +27,7 @@ const deleteTodoListEventHandler = async (e) => {
       // 로컬 store에서도 삭제
       deleteTodoList(todos, id);
     } catch (error) {
-      alert("⚠️Todo 삭제에 실패했습니다.");
+      handleTodoError(error);
       return;
     }
   } else {

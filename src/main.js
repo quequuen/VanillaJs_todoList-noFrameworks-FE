@@ -57,6 +57,19 @@ async function main() {
     console.error("매직링크 토큰 처리 중 에러:", err);
   }
 
+  // 앱 시작 시 로그인 상태 확인 및 todos 가져오기
+  try {
+    const { isAuthenticated, fetchTodosFromDB } = await import(
+      "./utils/auth.js"
+    );
+    if (isAuthenticated()) {
+      // 이미 로그인된 상태면 DB에서 todos 가져오기
+      await fetchTodosFromDB();
+    }
+  } catch (err) {
+    console.error("초기 todos 로드 실패:", err);
+  }
+
   router.get().subscribe(render);
   globalStore.subscribe(render);
   render();

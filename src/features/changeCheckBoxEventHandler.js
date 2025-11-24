@@ -2,6 +2,7 @@ import { globalStore } from "../stores/globalStore";
 import { isAuthenticated } from "../utils/auth";
 import { toggleTodo } from "../../api/todos";
 import sortTodosToPath from "../utils/sortTodosToPath";
+import { handleTodoError } from "../utils/errorHandler";
 
 //수정하기 전에 id를 이용해 해당 객체의 isDone 값을 가져오고 그 값이 Y면 N을, N이면 Y을 저장하는 객체 생성
 const getUpdatedTodoForCheckBoxById = (todos, id) => {
@@ -40,7 +41,7 @@ const changeCheckBoxEventHandler = async (e) => {
       const sortedTodos = sortTodosToPath(updatedTodos);
       globalStore.setState({ posts: sortedTodos });
     } catch (error) {
-      alert("⚠️Todo 상태 변경에 실패했습니다.");
+      handleTodoError(error);
       return;
     }
   } else {

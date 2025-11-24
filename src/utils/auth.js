@@ -18,7 +18,36 @@ export const setUser = (user) => {
 
 // user 정보 제거 (로그아웃 시 사용)
 export const clearUser = () => {
-  globalStore.setState({ user: null });
+  globalStore.setState({ user: null, posts: [] }); // posts도 초기화
+};
+
+// DB에서 todos 가져오기 (로그인 상태일 때만 사용)
+export const fetchTodosFromDB = async () => {
+  try {
+    const { getTodos } = await import("../../api/todos.js");
+    const response = await getTodos();
+
+    // 응답 데이터가 배열인지 확인
+    const todos = response?.data?.data || response?.data || [];
+
+    // 배열이 아닌 경우 빈 배열로 처리
+    const todosArray = Array.isArray(todos) ? todos : [];
+
+    // globalStore에 저장
+    globalStore.setState({ posts: todosArray });
+
+    return todosArray;
+  } catch (error) {
+    // 500 에러는 조용히 처리 (사용자에게 알림하지 않음)
+    // 다른 에러는 처리하되, 빈 배열로 초기화하여 앱이 계속 작동하도록 함
+    if (error.response?.status !== 500) {
+      const { handleTodoError } = await import("./errorHandler.js");
+      handleTodoError(error);
+    }
+    // 에러 발생 시 빈 배열로 초기화
+    globalStore.setState({ posts: [] });
+    return [];
+  }
 };
 
 // 현재 로그인한 사용자 정보 조회 (세션 쿠키 기반)
@@ -31,6 +60,8 @@ export const getCurrentUser = async () => {
 
     if (user) {
       setUser(user);
+      // 로그인 성공 시 DB에서 todos 가져오기
+      await fetchTodosFromDB();
       return user;
     }
 
@@ -53,6 +84,9 @@ export const handleMagicLinkToken = async () => {
       const response = await verifyMagicLink(token);
       const user = response.data.user;
       setUser(user);
+
+      // 로그인 성공 시 DB에서 todos 가져오기
+      await fetchTodosFromDB();
 
       // URL에서 token 제거
       window.history.replaceState({}, "", window.location.pathname);

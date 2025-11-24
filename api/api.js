@@ -26,38 +26,52 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    // 에러 처리 개선
+    //  명세에 따른 에러 처리
     if (error.response) {
       // 서버 응답이 있는 경우
       const { status, data } = error.response;
 
       // 에러 메시지 추출 (NestJS 형식 지원)
       let errorMessage =
-        data?.error || data?.message || "서버 오류가 발생했습니다.";
+        data?.message || data?.error || "서버 오류가 발생했습니다.";
 
+      // 배열 형식의 메시지 처리 (ValidationPipe)
       if (Array.isArray(errorMessage)) {
-        // ValidationPipe 에러 형식: ["field must be...", ...]
         errorMessage = errorMessage.join(", ");
       }
 
+      //  명세에 따른 상태 코드별 로깅
       devLogger.apiError(error.config?.url || "Unknown", {
         status,
         statusCode: data?.statusCode || status,
         message: errorMessage,
         data,
+        path: data?.path || error.config?.url,
+        timestamp: data?.timestamp,
       });
 
-      // 401 에러 (인증 실패) 처리
+      // 401 에러 (인증 실패) 처리 - : "로그인이 필요합니다."
       if (status === 401) {
-        // 인증 실패 시 user 정보 제거 (비동기 처리)
+        // 인증 실패 시 user 정보 제거 및 화면 리렌더링 (비동기 처리)
+        const authErrorMessage =
+          errorMessage || "세션이 만료되었습니다. 다시 로그인해주세요.";
+
         import("../src/utils/auth.js").then(({ clearUser }) => {
-          clearUser();
+          clearUser(); // globalStore.setState() 호출 → notify() → render() 자동 호출
+
+          // 사용자에게 알림 표시
+          alert(authErrorMessage);
         });
       }
 
-      // 429 에러 (Rate Limiting) 처리
+      // 429 에러 (Rate Limiting) 처리 - : "Too Many Requests"
       if (status === 429) {
-        devLogger.warn("Rate Limiting: 요청이 너무 많습니다.");
+        const retryAfter = error.response.headers?.["retry-after"];
+        devLogger.warn(
+          `Rate Limiting: 요청이 너무 많습니다.${
+            retryAfter ? ` ${retryAfter}초 후 재시도 가능합니다.` : ""
+          }`
+        );
       }
     } else if (error.request) {
       // 요청은 보냈지만 응답을 받지 못한 경우 (네트워크 에러)

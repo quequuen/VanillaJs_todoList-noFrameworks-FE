@@ -1,6 +1,7 @@
 import { logout } from "../../../api/auth";
 import { clearUser } from "../../utils/auth";
 import { router } from "../../../router";
+import { handleAuthError } from "../../utils/errorHandler";
 
 const logoutEventHandler = async () => {
   const confirmLogout = confirm("로그아웃하시겠습니까?");
@@ -19,7 +20,8 @@ const logoutEventHandler = async () => {
     // 페이지 새로고침
     window.location.reload();
   } catch (error) {
-    alert("로그아웃에 실패했습니다.");
+    // 로그아웃은 항상 성공하지만, 에러가 발생하면 처리
+    handleAuthError(error);
   }
 };
 
