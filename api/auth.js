@@ -42,8 +42,11 @@ export const getCurrentUser = async () => {
     console.warn("getCurrentUser: 응답 형식이 올바르지 않습니다.", user);
     return null;
   } catch (error) {
-    // 401 에러면 로그인 안 된 상태
+    // 401 에러는 세션이 없거나 만료된 상태
     if (error.response?.status === 401) {
+      console.warn(
+        "getCurrentUser: 401 Unauthorized - 세션이 없거나 만료되었습니다."
+      );
       return null;
     }
     // 네트워크 에러나 다른 에러는 null 반환 (에러를 throw하지 않음)
