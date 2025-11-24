@@ -100,19 +100,24 @@ export const getCurrentUser = async () => {
   }
 };
 
-// 매직링크 토큰 처리 (백엔드 redirect 방식)
-// 백엔드에서 /api/auth/verify?token=xxx로 접근하면
-// 세션 생성 후 프론트엔드로 redirect(?success=true 또는 ?error=메시지)
-// 이 함수는 success 파라미터가 있을 때 사용자 정보를 가져옴
-export const handleMagicLinkSuccess = async () => {
+// 매직링크 토큰 처리 (프론트엔드에서 verify-api 호출 방식)
+// 이메일 링크: https://프론트주소/?token=xxx
+// 프론트엔드에서 verify-api를 호출하여 세션 쿠키 설정
+export const handleMagicLinkToken = async () => {
   const urlParams = new URLSearchParams(window.location.search);
-  const success = urlParams.get("success");
+  const token = urlParams.get("token");
 
-  if (success === "true") {
+  if (token) {
     try {
-      console.log("✅ 매직링크 인증 성공 - 사용자 정보 조회 중...");
+      console.log("🔐 매직링크 토큰 검증 시작:", token);
 
-      // 백엔드에서 이미 세션 쿠키가 설정되었으므로 getCurrentUser로 사용자 정보 가져오기
+      // 프론트엔드에서 verify-api 호출 (credentials: 'include'는 api.js에서 자동 설정됨)
+      const { verifyMagicLink } = await import("../../api/auth.js");
+      const response = await verifyMagicLink(token);
+
+      console.log("✅ 매직링크 인증 성공:", response.data);
+
+      // verify-api 호출 후 세션 쿠키가 설정되었으므로 getCurrentUser로 사용자 정보 가져오기
       // getCurrentUser 내부에서 setUser, fetchTodosFromDB를 자동으로 처리함
       const user = await getCurrentUser();
 
@@ -122,15 +127,38 @@ export const handleMagicLinkSuccess = async () => {
         return { success: false, error: { message: "사용자 정보 조회 실패" } };
       }
 
-      // URL에서 success 파라미터 제거
+      console.log("✅ 로그인 완료:", user);
+
+      // URL에서 token 파라미터 제거
       window.history.replaceState({}, "", window.location.pathname);
 
       return { success: true, user };
     } catch (error) {
-      console.error("매직링크 인증 후 사용자 정보 조회 에러:", error);
-      return { success: false, error: { message: "사용자 정보 조회 실패" } };
+      // 에러 응답 처리
+      let errorMessage = "인증에 실패했습니다.";
+
+      if (error.response?.status === 401 || error.response?.status === 400) {
+        const errorData = error.response.data;
+        if (errorData?.message) {
+          if (Array.isArray(errorData.message)) {
+            errorMessage = errorData.message.join(", ");
+          } else {
+            errorMessage = errorData.message;
+          }
+        } else if (errorData?.error) {
+          errorMessage = errorData.error;
+        }
+      }
+
+      console.error("❌ 매직링크 인증 에러:", errorMessage);
+      alert(errorMessage);
+
+      // URL에서 token 파라미터 제거
+      window.history.replaceState({}, "", window.location.pathname);
+
+      return { success: false, error: { message: errorMessage } };
     }
   }
 
-  return null; // success 파라미터가 없으면 null 반환
+  return null; // token이 없으면 null 반환
 };
