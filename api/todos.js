@@ -18,8 +18,8 @@ const resolveEndpoint = (key) => {
   return endpoint;
 };
 
-export const getTodos = async (params = {}) => {
-  return api.get(resolveEndpoint("list"), { params });
+export const getTodos = async () => {
+  return api.get(resolveEndpoint("list"));
 };
 
 export const getTodoById = async (id) => {

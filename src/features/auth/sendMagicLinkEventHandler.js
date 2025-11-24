@@ -1,6 +1,5 @@
 import { sendMagicLink } from "../../../api/auth";
 import closeModalEventHandler from "../closeModalEventHandler";
-import { addEvent } from "../../utils/eventUtil";
 
 const setInputValueForLogin = () => {
   const $email = document.getElementById("loginEmail");
