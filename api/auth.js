@@ -38,7 +38,9 @@ export const getCurrentUser = async () => {
     if (error.response?.status === 401) {
       return null;
     }
-    throw new Error("사용자 정보를 가져올 수 없습니다.");
+    // 네트워크 에러나 다른 에러는 null 반환 (에러를 throw하지 않음)
+    console.error("getCurrentUser API Error:", error);
+    return null;
   }
 };
 

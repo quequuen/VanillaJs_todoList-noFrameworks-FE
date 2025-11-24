@@ -23,20 +23,20 @@ async function main() {
     // 성공 메시지 표시
     alert(decodeURIComponent(success));
 
-    // 세션 쿠키로 사용자 정보 조회
-    try {
-      const { getCurrentUser } = await import("./utils/auth.js");
-      const user = await getCurrentUser();
-
-      if (user) {
-        console.log("로그인된 사용자:", user);
-        // setUser는 getCurrentUser 내부에서 이미 호출됨
-      } else {
-        console.warn("사용자 정보를 가져올 수 없습니다.");
-      }
-    } catch (err) {
-      console.error("사용자 정보 조회 실패:", err);
-    }
+    // 세션 쿠키로 사용자 정보 조회 (비동기로 처리하여 렌더링을 막지 않음)
+    import("./utils/auth.js")
+      .then(({ getCurrentUser }) => getCurrentUser())
+      .then((user) => {
+        if (user) {
+          console.log("로그인된 사용자:", user);
+          // setUser는 getCurrentUser 내부에서 이미 호출됨
+        } else {
+          console.warn("사용자 정보를 가져올 수 없습니다.");
+        }
+      })
+      .catch((err) => {
+        console.error("사용자 정보 조회 실패:", err);
+      });
 
     // URL 정리 (보안)
     window.history.replaceState({}, "", window.location.pathname);

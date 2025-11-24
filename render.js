@@ -23,7 +23,17 @@ function render() {
     ${DMinusThree()}
   </div>
 `;
-  } catch (error) {}
+  } catch (error) {
+    console.error("Render Error:", error);
+    // 에러가 발생해도 최소한 빈 화면이라도 보여주기
+    if ($root) {
+      $root.innerHTML = `
+        <div class="max-w-[700px] mx-auto h-[100%] px-4">
+          <div class="p-4 text-red-500">화면을 렌더링하는 중 오류가 발생했습니다.</div>
+        </div>
+      `;
+    }
+  }
   registerGlobalEvents();
 }
 
