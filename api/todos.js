@@ -1,13 +1,15 @@
 //  todo 관련 api
-import api from "./api";
+import api, { isUsingProxy } from "./api";
+
+const API_PREFIX = isUsingProxy() ? "" : "/api";
 
 const TODO_ENDPOINTS = {
-  list: "/api/todo",
-  detail: "/api/todo", // /api/todos/:id로 사용
-  create: "/api/todo",
-  update: "/api/todo", // /api/todos/:id로 사용
-  remove: "/api/todo", // /api/todos/:id로 사용
-  toggle: "/api/todo", // /api/todos/:id/toggle로 사용
+  list: `${API_PREFIX}/todo`,
+  detail: `${API_PREFIX}/todo`, // /todo/:id로 사용
+  create: `${API_PREFIX}/todo`,
+  update: `${API_PREFIX}/todo`, // /todo/:id로 사용
+  remove: `${API_PREFIX}/todo`, // /todo/:id로 사용
+  toggle: `${API_PREFIX}/todo`, // /todo/:id/toggle로 사용
 };
 
 const resolveEndpoint = (key) => {

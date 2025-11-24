@@ -1,11 +1,13 @@
 // 인증 관련 api
-import api from "./api";
+import api, { isUsingProxy } from "./api";
+
+const API_PREFIX = isUsingProxy() ? "" : "/api";
 
 const AUTH_ENDPOINTS = {
-  sendMagicLink: "/api/auth/send-magic-link",
-  verifyMagicLink: "/api/auth/verify-api",
-  logout: "/api/auth/logout",
-  getCurrentUser: "/api/auth/me",
+  sendMagicLink: `${API_PREFIX}/auth/send-magic-link`,
+  verifyMagicLink: `${API_PREFIX}/auth/verify-api`,
+  logout: `${API_PREFIX}/auth/logout`,
+  getCurrentUser: `${API_PREFIX}/auth/me`,
 };
 
 const resolveEndpoint = (key) => {

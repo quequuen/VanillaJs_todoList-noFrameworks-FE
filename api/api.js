@@ -4,8 +4,15 @@ import devLogger from "../src/utils/logger.js";
 // 개발/프로덕션 환경에 따라 baseURL 자동 설정
 // 프로덕션: 프록시 사용 (/api로 시작하는 경로는 vercel.json의 rewrites로 백엔드로 전달)
 // 개발: VITE_API_BASE_URL 또는 localhost 사용
+export const isUsingProxy = () => {
+  if (typeof window === "undefined") return false;
+  return (
+    import.meta.env.PROD || window.location.hostname.includes("vercel.app")
+  );
+};
+
 const getBaseURL = () => {
-  if (import.meta.env.PROD || window.location.hostname.includes("vercel.app")) {
+  if (isUsingProxy()) {
     return "/api"; // 상대 경로로 설정하여 프록시 사용
   }
   // 개발 환경
