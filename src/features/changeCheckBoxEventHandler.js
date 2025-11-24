@@ -33,9 +33,7 @@ const changeCheckBoxEventHandler = async (e) => {
     try {
       const response = await toggleTodo(id);
 
-      // DB에서 반환된 Todo로 업데이트
-      // 백엔드 응답 형식에 맞게 처리 (response.data.data 또는 response.data)
-      const updatedTodo = response?.data?.data || response?.data;
+      const updatedTodo = response?.data;
 
       // 응답 데이터가 유효한지 확인
       if (!updatedTodo || typeof updatedTodo !== "object") {

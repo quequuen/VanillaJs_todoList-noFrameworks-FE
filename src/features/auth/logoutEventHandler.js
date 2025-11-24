@@ -10,7 +10,7 @@ const logoutEventHandler = async () => {
 
   try {
     await logout();
-    clearUser();
+    await clearUser();
 
     // 홈으로 이동
     router.get().push("/");

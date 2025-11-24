@@ -9,7 +9,7 @@ const verifyMagicLinkEventHandler = async (token) => {
     const user = response.data.user;
 
     // user 정보 저장
-    setUser(user);
+    await setUser(user);
 
     // 홈으로 이동
     router.get().push("/");

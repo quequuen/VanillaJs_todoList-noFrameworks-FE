@@ -12,12 +12,12 @@ export const getUser = () => {
 };
 
 // user 정보 설정 (매직링크 인증 성공 시 사용)
-export const setUser = (user) => {
+export const setUser = async (user) => {
   globalStore.setState({ user });
 };
 
 // user 정보 제거 (로그아웃 시 사용)
-export const clearUser = () => {
+export const clearUser = async () => {
   globalStore.setState({ user: null, posts: [] }); // posts도 초기화
 };
 
@@ -35,8 +35,7 @@ export const fetchTodosFromDB = async () => {
     const { getTodos } = await import("../../api/todos.js");
     const response = await getTodos();
 
-    // 응답 데이터가 배열인지 확인
-    const todos = response?.data?.data || response?.data || [];
+    const todos = response?.data || [];
 
     // 배열이 아닌 경우 빈 배열로 처리
     const todosArray = Array.isArray(todos) ? todos : [];
@@ -46,19 +45,29 @@ export const fetchTodosFromDB = async () => {
 
     return todosArray;
   } catch (error) {
-    // 401 에러면 로그인 상태가 아니므로 조용히 처리
+    // 에러 메시지 설정
+    let errorMessage = "Todo 목록을 불러오는데 실패했습니다.";
+
     if (error.response?.status === 401) {
-      clearUser();
-      globalStore.setState({ posts: [] });
-      return [];
+      errorMessage = "인증이 필요합니다. 다시 로그인해주세요.";
+      await clearUser();
+    } else if (error.response?.status >= 500) {
+      errorMessage = "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+    } else if (
+      error.code === "ERR_NETWORK" ||
+      error.message.includes("Network")
+    ) {
+      errorMessage = "네트워크 연결을 확인해주세요.";
+    } else if (error.response?.data?.message) {
+      const message = error.response.data.message;
+      errorMessage = Array.isArray(message) ? message.join(", ") : message;
+    } else if (error.message) {
+      errorMessage = `오류가 발생했습니다: ${error.message}`;
     }
 
-    // 500 에러는 조용히 처리 (사용자에게 알림하지 않음)
-    // 다른 에러는 처리하되, 빈 배열로 초기화하여 앱이 계속 작동하도록 함
-    if (error.response?.status !== 500) {
-      const { handleTodoError } = await import("./errorHandler.js");
-      handleTodoError(error);
-    }
+    console.error("❌ Todo 목록 조회 실패:", error);
+    alert(errorMessage);
+
     // 에러 발생 시 빈 배열로 초기화
     globalStore.setState({ posts: [] });
     return [];
@@ -70,7 +79,15 @@ export const getCurrentUser = async () => {
   try {
     // 쿠키 확인
     const cookies = document.cookie;
-    console.log("🍪 /api/auth/me 호출 전 쿠키 상태:", cookies || "쿠키 없음");
+
+    // 쿠키가 없으면 조용히 비로그인 상태로 처리
+    if (!cookies) {
+      console.log("🍪 쿠키가 없습니다. 비로그인 상태로 처리합니다.");
+      await clearUser();
+      return null;
+    }
+
+    console.log("🍪 /api/auth/me 호출 전 쿠키 상태:", cookies);
 
     const { getCurrentUser: getCurrentUserAPI } = await import(
       "../../api/auth.js"
@@ -79,23 +96,41 @@ export const getCurrentUser = async () => {
 
     if (user) {
       console.log("✅ getCurrentUser 성공:", user);
-      setUser(user);
+      await setUser(user);
       // 로그인 성공 시 DB에서 todos 가져오기
       await fetchTodosFromDB();
       return user;
     }
 
-    // user가 null이면 (401 에러 등) 로그아웃 처리
-    console.warn(
-      "⚠️ getCurrentUser: user가 null입니다. 세션 쿠키가 없거나 만료되었을 수 있습니다."
+    // user가 null이면 (401 에러 등) 비로그인 상태로 처리
+    // 쿠키가 있었지만 세션이 만료된 경우
+    console.log(
+      "ℹ️ 세션이 만료되었거나 유효하지 않습니다. 비로그인 상태로 처리합니다."
     );
-    console.warn("⚠️ 현재 쿠키:", cookies || "쿠키 없음");
-    clearUser();
+    alert("세션이 만료되었습니다. 다시 로그인해주세요.");
+    await clearUser();
     return null;
   } catch (error) {
+    // 네트워크 에러나 서버 에러
+    let errorMessage = "사용자 정보를 불러오는데 실패했습니다.";
+
+    if (error.response?.status === 401) {
+      errorMessage = "인증이 필요합니다. 다시 로그인해주세요.";
+    } else if (error.response?.status >= 500) {
+      errorMessage = "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+    } else if (
+      error.code === "ERR_NETWORK" ||
+      error.message.includes("Network")
+    ) {
+      errorMessage = "네트워크 연결을 확인해주세요.";
+    } else if (error.message) {
+      errorMessage = `오류가 발생했습니다: ${error.message}`;
+    }
+
     console.error("❌ 사용자 정보 조회 실패:", error);
-    // 에러 발생 시에도 로그아웃 처리
-    clearUser();
+    alert(errorMessage);
+    // 에러 발생 시 비로그인 상태로 처리
+    await clearUser();
     return null;
   }
 };
@@ -111,7 +146,7 @@ export const handleMagicLinkToken = async () => {
     try {
       console.log("🔐 매직링크 토큰 검증 시작:", token);
 
-      // 프론트엔드에서 verify-api 호출 (credentials: 'include'는 api.js에서 자동 설정됨)
+      // 프론트엔드에서 verify-api 호출
       const { verifyMagicLink } = await import("../../api/auth.js");
       const response = await verifyMagicLink(token);
 
