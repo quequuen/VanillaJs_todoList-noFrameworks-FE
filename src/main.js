@@ -23,21 +23,6 @@ async function main() {
     // 성공 메시지 표시
     alert(decodeURIComponent(success));
 
-    // 세션 쿠키로 사용자 정보 조회 (비동기로 처리하여 렌더링을 막지 않음)
-    import("./utils/auth.js")
-      .then(({ getCurrentUser }) => getCurrentUser())
-      .then((user) => {
-        if (user) {
-          console.log("로그인된 사용자:", user);
-          // setUser는 getCurrentUser 내부에서 이미 호출됨
-        } else {
-          console.warn("사용자 정보를 가져올 수 없습니다.");
-        }
-      })
-      .catch((err) => {
-        console.error("사용자 정보 조회 실패:", err);
-      });
-
     // URL 정리 (보안)
     window.history.replaceState({}, "", window.location.pathname);
   }
@@ -57,17 +42,16 @@ async function main() {
     console.error("매직링크 토큰 처리 중 에러:", err);
   }
 
-  // 앱 시작 시 로그인 상태 확인 및 todos 가져오기
+  // 앱 시작 시 항상 로그인 상태 확인 및 todos 가져오기
+  // getCurrentUser 내부에서 setUser, fetchTodosFromDB, clearUser를 자동으로 처리함
   try {
-    const { isAuthenticated, fetchTodosFromDB } = await import(
-      "./utils/auth.js"
-    );
-    if (isAuthenticated()) {
-      // 이미 로그인된 상태면 DB에서 todos 가져오기
-      await fetchTodosFromDB();
-    }
+    const { getCurrentUser } = await import("./utils/auth.js");
+    await getCurrentUser();
   } catch (err) {
-    console.error("초기 todos 로드 실패:", err);
+    console.error("사용자 정보 조회 실패:", err);
+    // 에러 발생 시에도 로그아웃 처리
+    const { clearUser } = await import("./utils/auth.js");
+    clearUser();
   }
 
   router.get().subscribe(render);

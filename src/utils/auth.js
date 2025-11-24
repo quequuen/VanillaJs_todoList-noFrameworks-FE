@@ -65,9 +65,13 @@ export const getCurrentUser = async () => {
       return user;
     }
 
+    // user가 null이면 (401 에러 등) 로그아웃 처리
+    clearUser();
     return null;
   } catch (error) {
     console.error("사용자 정보 조회 실패:", error);
+    // 에러 발생 시에도 로그아웃 처리
+    clearUser();
     return null;
   }
 };
