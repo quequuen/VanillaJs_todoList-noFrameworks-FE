@@ -117,24 +117,31 @@ export const handleMagicLinkToken = async () => {
 
       // 세션 쿠키가 설정되었는지 확인하기 위해 잠시 대기
       // 백엔드에서 세션 쿠키를 설정하는데 시간이 걸릴 수 있음
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       // 쿠키 확인
       const cookies = document.cookie;
       console.log("🍪 verify-api 호출 후 쿠키 상태:", cookies || "쿠키 없음");
 
-      // 세션 쿠키 확인을 위해 getCurrentUser 호출
-      const verifiedUser = await getCurrentUser();
+      // 세션 쿠키 확인을 위해 getCurrentUser 호출 (내부 함수 직접 호출하여 중복 방지)
+      const { getCurrentUser: getCurrentUserAPI } = await import(
+        "../../api/auth.js"
+      );
+      const verifiedUser = await getCurrentUserAPI();
 
-      if (!verifiedUser) {
+      if (!verifiedUser || !verifiedUser.id || !verifiedUser.email) {
         console.error(
-          "❌ 세션 쿠키가 설정되지 않았습니다. 백엔드 CORS 설정을 확인해주세요."
+          "❌ 세션 쿠키가 설정되지 않았거나 세션 데이터가 없습니다. 백엔드 세션 스토어를 확인해주세요."
         );
+        console.error("❌ 응답 데이터:", verifiedUser);
         alert(
           "로그인은 성공했지만 세션 설정에 실패했습니다. 페이지를 새로고침해주세요."
         );
         return { success: false, error: { message: "세션 설정 실패" } };
       }
+
+      // 세션 확인 성공 시 사용자 정보 저장
+      setUser(verifiedUser);
 
       // 로그인 성공 시 DB에서 todos 가져오기
       await fetchTodosFromDB();
