@@ -2,8 +2,18 @@ import axios from "axios";
 import devLogger from "../src/utils/logger.js";
 
 // 개발/프로덕션 환경에 따라 baseURL 자동 설정
+// 프로덕션: 프록시 사용 (/api로 시작하는 경로는 vercel.json의 rewrites로 백엔드로 전달)
+// 개발: VITE_API_BASE_URL 또는 localhost 사용
+const getBaseURL = () => {
+  if (import.meta.env.PROD || window.location.hostname.includes("vercel.app")) {
+    return "/api"; // 상대 경로로 설정하여 프록시 사용
+  }
+  // 개발 환경
+  return import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+};
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:3000",
+  baseURL: getBaseURL(),
   withCredentials: true,
 });
 
@@ -35,21 +45,43 @@ api.interceptors.response.use(
   (response) => {
     devLogger.apiResponse(response.config.url, response.data);
 
-    // Set-Cookie 헤더 확인 (개발 모드에서만)
-    if (import.meta.env.DEV || import.meta.env.MODE === "development") {
-      const setCookieHeader = response.headers["set-cookie"];
-      if (setCookieHeader) {
-        console.log("✅ Response Set-Cookie:", setCookieHeader);
-      }
-
-      // 현재 쿠키 상태 확인
-      const cookies = document.cookie;
-      if (cookies) {
-        console.log("🍪 Current Cookies:", cookies);
-      } else {
-        console.warn("⚠️ 쿠키가 설정되지 않았습니다.");
-      }
+    // Set-Cookie 헤더 확인
+    const setCookieHeader = response.headers["set-cookie"];
+    if (setCookieHeader) {
+      console.log("✅ Response Set-Cookie Header:", setCookieHeader);
+      console.log("📋 Set-Cookie 헤더 상세:", {
+        header: setCookieHeader,
+        isArray: Array.isArray(setCookieHeader),
+        length: Array.isArray(setCookieHeader) ? setCookieHeader.length : 1,
+      });
+    } else {
+      console.warn("⚠️ Set-Cookie 헤더가 없습니다.");
     }
+
+    // 쿠키 저장 확인
+    setTimeout(() => {
+      const cookies = document.cookie;
+      console.log("🍪 응답 후 쿠키 상태:", {
+        cookies: cookies || "쿠키 없음",
+        cookieCount: cookies ? cookies.split(";").length : 0,
+        hasSessionId: cookies?.includes("sessionId"),
+        allCookies: cookies ? cookies.split(";").map((c) => c.trim()) : [],
+      });
+
+      // Set-Cookie 헤더가 있었는데 쿠키가 저장되지 않은 경우
+      if (setCookieHeader && !cookies) {
+        console.error(
+          "❌ Set-Cookie 헤더는 있었지만 브라우저가 쿠키를 저장하지 않았습니다!"
+        );
+        console.error("❌ 크로스 도메인 쿠키 설정 문제일 수 있습니다.");
+        console.error("❌ 확인 사항:");
+        console.error("   1. SameSite=None은 Secure가 필수입니다.");
+        console.error(
+          "   2. 도메인이 다르면 브라우저가 쿠키를 차단할 수 있습니다."
+        );
+        console.error("   3. 브라우저의 쿠키 정책을 확인하세요.");
+      }
+    }, 100);
 
     return response;
   },
