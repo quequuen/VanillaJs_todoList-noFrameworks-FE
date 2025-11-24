@@ -32,7 +32,15 @@ export const logout = async () => {
 export const getCurrentUser = async () => {
   try {
     const response = await api.get(resolveEndpoint("getCurrentUser"));
-    return response.data;
+
+    const user = response?.data;
+    if (user && typeof user === "object" && user.id && user.email) {
+      return user;
+    }
+
+    // 응답 형식이 올바르지 않으면 null 반환
+    console.warn("getCurrentUser: 응답 형식이 올바르지 않습니다.", user);
+    return null;
   } catch (error) {
     // 401 에러면 로그인 안 된 상태
     if (error.response?.status === 401) {
