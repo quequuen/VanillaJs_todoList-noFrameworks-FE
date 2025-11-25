@@ -66,12 +66,20 @@ const updateTodoItemEventHandler = async (e) => {
   }
 
   // 항상 DB에 저장 (API 호출)
+  // 명세서: PUT /api/todo/:id는 content, deadLine, isDone을 모두 받을 수 있음
   try {
-    const response = await updateTodo(id, {
-      deadLine,
+    // 날짜 형식 확인: input type="date"는 YYYY-MM-DD 형식으로 반환됨
+    const requestBody = {
       content,
-      isDone,
-    });
+      deadLine, // YYYY-MM-DD 형식
+    };
+
+    // isDone이 있으면 포함 (선택적 필드)
+    if (isDone) {
+      requestBody.isDone = isDone;
+    }
+
+    const response = await updateTodo(id, requestBody);
 
     const updatedTodo = response?.data;
 
@@ -86,12 +94,13 @@ const updateTodoItemEventHandler = async (e) => {
     }
 
     // 백엔드 응답 필드를 프론트엔드 형식에 맞게 매핑
+    // 명세서: 응답은 id, content, deadLine, isDone, creation을 포함
     const mappedTodo = {
       id: updatedTodo.id,
-      deadLine: updatedTodo.deadLine || updatedTodo.deadline || deadLine,
-      content: updatedTodo.content || updatedTodo.title || content,
-      creation: updatedTodo.creation || updatedTodo.createdAt,
-      isDone: updatedTodo.isDone || updatedTodo.is_done || isDone,
+      deadLine: updatedTodo.deadLine, // ISO 8601 형식 (2025-11-25T00:00:00.000Z)
+      content: updatedTodo.content,
+      creation: updatedTodo.creation,
+      isDone: updatedTodo.isDone, // 'Y' 또는 'N'
     };
 
     const todos = globalStore.getState().posts;

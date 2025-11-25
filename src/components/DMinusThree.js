@@ -8,9 +8,14 @@ const DMinusThree = () => {
   const today = getDate();
 
   const getFilterData = () => {
+    // 오늘 날짜 (시간 제거, 00:00:00으로 설정)
     const todayDate = new Date(today);
+    todayDate.setHours(0, 0, 0, 0);
+
+    // 3일 후 날짜 (23:59:59로 설정하여 하루 종일 포함)
     const threeDaysLater = new Date(todayDate);
-    threeDaysLater.setDate(todayDate.getDate() + 3); // 3일 뒤로 설정
+    threeDaysLater.setDate(todayDate.getDate() + 3);
+    threeDaysLater.setHours(23, 59, 59, 999);
 
     return todos.filter((todo) => {
       // todo가 유효한지 확인
@@ -24,7 +29,16 @@ const DMinusThree = () => {
         if (isNaN(deadline.getTime())) {
           return false;
         }
-        return deadline >= todayDate && deadline <= threeDaysLater;
+
+        // 오늘부터 3일 후까지의 범위에 있는지 확인
+        // 오늘은 포함하지 않고, 오늘 이후부터 3일 후까지
+        const deadlineDate = new Date(deadline);
+        deadlineDate.setHours(0, 0, 0, 0);
+        const todayDateOnly = new Date(todayDate);
+        todayDateOnly.setHours(0, 0, 0, 0);
+
+        // 오늘보다 크고 3일 후보다 작거나 같은 것만
+        return deadlineDate > todayDateOnly && deadlineDate <= threeDaysLater;
       } catch (error) {
         console.warn("DMinusThree: 날짜 파싱 에러:", todo, error);
         return false;

@@ -3,6 +3,21 @@ import { addEvent } from "../utils/eventUtil";
 
 addEvent("click", "#updateTodoItem", updateTodoItemEventHandler);
 
+// 날짜 형식 변환: ISO 8601 (2025-11-25T00:00:00.000Z) → YYYY-MM-DD
+const formatDateForInput = (dateString) => {
+  if (!dateString) return "";
+  try {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  } catch (error) {
+    // 이미 YYYY-MM-DD 형식이거나 파싱 실패 시 원본 반환
+    return dateString.split("T")[0] || dateString;
+  }
+};
+
 const EditTodoItem = (todo) => {
   return `<div class="flex justify-center items-center w-[100%] h-[15%]">
         <p class="italic text-blue-700 text-4xl font-extrabold">EDIT</p>
@@ -26,7 +41,7 @@ const EditTodoItem = (todo) => {
             <tr>
               <td><p class="font-bold">📌 마감일</p></td>
               <td><input id="editTodoItemDeadLine" type="date" class="w-40 outline outline-1 outline-gray-600 
-      rounded px-2" value="${todo.deadLine}"></input></td>
+      rounded px-2" value="${formatDateForInput(todo.deadLine)}"></input></td>
             </tr>
             <tr>
               <td><p class="font-bold">📌 check</p></td>

@@ -90,13 +90,13 @@ const addTodoItemEventHandler = async (e) => {
     }
 
     // 백엔드 응답 필드를 프론트엔드 형식에 맞게 매핑
-    // 백엔드가 다른 필드명을 사용할 수 있으므로 안전하게 처리
+    // 명세서: 응답은 id, content, deadLine, isDone, creation을 포함
     const mappedTodo = {
       id: savedTodo.id,
-      deadLine: savedTodo.deadLine || savedTodo.deadline || date,
-      content: savedTodo.content || savedTodo.title || content,
-      creation: savedTodo.creation || savedTodo.createdAt || getDate(),
-      isDone: savedTodo.isDone || savedTodo.is_done || "N",
+      deadLine: savedTodo.deadLine, // ISO 8601 형식 (2025-11-25T00:00:00.000Z)
+      content: savedTodo.content,
+      creation: savedTodo.creation,
+      isDone: savedTodo.isDone, // 기본값 'N'
     };
 
     setTodoStoreByAddTodoItem(mappedTodo);
