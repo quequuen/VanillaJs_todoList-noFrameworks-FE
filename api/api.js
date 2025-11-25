@@ -45,7 +45,18 @@ api.interceptors.request.use(
     // 쿠키 확인
     const cookies = document.cookie;
     if (cookies) {
-      console.log("🍪 Request Cookies:", cookies);
+      const cookieArray = cookies.split(";").map((c) => c.trim());
+      const sessionIdCookie = cookieArray.find((c) =>
+        c.startsWith("sessionId")
+      );
+
+      console.log("🍪 Request Cookies:", {
+        allCookies: cookies,
+        cookieArray,
+        hasSessionId: !!sessionIdCookie,
+        sessionIdCookie: sessionIdCookie || "없음",
+        cookieCount: cookieArray.length,
+      });
     } else {
       console.warn("⚠️ Request에 쿠키가 없습니다.");
     }

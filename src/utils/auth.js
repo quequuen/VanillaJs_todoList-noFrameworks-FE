@@ -180,7 +180,16 @@ export const handleMagicLinkToken = async () => {
       // verify-api 호출 후 세션 쿠키가 설정되었으므로 getCurrentUser로 사용자 정보 가져오기
       // getCurrentUser 내부에서 setUser, fetchTodosFromDB를 자동으로 처리함
       console.log("👤 getCurrentUser 호출 시작...");
+      console.log("🍪 getCurrentUser 호출 전 쿠키 상태:", document.cookie);
+
       const user = await getCurrentUser();
+
+      console.log("👤 getCurrentUser 결과:", {
+        user,
+        hasUser: !!user,
+        userId: user?.id,
+        userEmail: user?.email,
+      });
 
       if (!user || !user.id || !user.email) {
         console.error("❌ 사용자 정보를 가져올 수 없습니다.");
