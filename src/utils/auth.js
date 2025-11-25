@@ -135,13 +135,122 @@ export const getCurrentUser = async () => {
   }
 };
 
-// 매직링크 토큰 처리 (프론트엔드에서 verify-api 호출 방식)
-// 이메일 링크: https://프론트주소/?token=xxx
-// 프론트엔드에서 verify-api를 호출하여 세션 쿠키 설정
+// 매직링크 토큰 처리
+// 두 가지 방식 지원:
+// 1. 백엔드 리다이렉트 방식: 이메일 링크 → 백엔드 /api/auth/verify → 프론트엔드 /?success=...
+// 2. 프론트엔드 직접 호출 방식: 이메일 링크 → 프론트엔드 /?token=xxx → verify-api 호출
 export const handleMagicLinkToken = async () => {
   const urlParams = new URLSearchParams(window.location.search);
+  const success = urlParams.get("success");
   const token = urlParams.get("token");
 
+  // 백엔드 리다이렉트 방식: success 파라미터가 있으면 이미 백엔드에서 세션 설정 완료
+  if (success) {
+    console.log(
+      "✅ 백엔드 리다이렉트로 인증 완료:",
+      decodeURIComponent(success)
+    );
+    console.log("⏳ 세션 쿠키 설정 대기 중...");
+
+    // 백엔드에서 리다이렉트할 때 Set-Cookie 헤더가 전달되므로 쿠키 설정 대기
+    // 리다이렉트 후 브라우저가 쿠키를 처리하는데 시간이 필요함
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    // 1. 먼저 /api/auth/me를 호출하여 세션 확인
+    console.log("👤 1단계: getCurrentUser 호출하여 세션 확인...");
+    let user = await getCurrentUser();
+
+    console.log("👤 getCurrentUser 결과:", {
+      user,
+      hasUser: !!user,
+      userId: user?.id,
+      userEmail: user?.email,
+    });
+
+    // 2. 세션이 없으면 URL의 token 파라미터로 /api/auth/verify-api 호출
+    if (!user || !user.id || !user.email) {
+      console.warn(
+        "⚠️ 세션이 없습니다. URL의 token 파라미터로 verify-api 호출 시도..."
+      );
+
+      // URL에서 token 파라미터 확인
+      const tokenFromUrl = urlParams.get("token");
+
+      if (tokenFromUrl) {
+        console.log("🔐 token 파라미터 발견:", tokenFromUrl);
+        console.log("📡 verify-api 호출 시작...");
+
+        try {
+          // 프론트엔드에서 verify-api 호출
+          const { verifyMagicLink } = await import("../../api/auth.js");
+          const response = await verifyMagicLink(tokenFromUrl);
+
+          console.log("✅ verify-api 호출 완료:", response.data);
+
+          // verify-api 호출 후 쿠키 설정 대기
+          await new Promise((resolve) => setTimeout(resolve, 500));
+
+          // 다시 getCurrentUser 호출
+          console.log("👤 2단계: verify-api 후 getCurrentUser 재호출...");
+          user = await getCurrentUser();
+
+          console.log("👤 getCurrentUser 결과 (재시도):", {
+            user,
+            hasUser: !!user,
+            userId: user?.id,
+            userEmail: user?.email,
+          });
+        } catch (error) {
+          console.error("❌ verify-api 호출 실패:", error);
+          let errorMessage = "인증에 실패했습니다.";
+
+          if (
+            error.response?.status === 401 ||
+            error.response?.status === 400
+          ) {
+            const errorData = error.response.data;
+            if (errorData?.message) {
+              if (Array.isArray(errorData.message)) {
+                errorMessage = errorData.message.join(", ");
+              } else {
+                errorMessage = errorData.message;
+              }
+            } else if (errorData?.error) {
+              errorMessage = errorData.error;
+            }
+          }
+
+          alert(errorMessage);
+          window.history.replaceState({}, "", window.location.pathname);
+          return { success: false, error: { message: errorMessage } };
+        }
+      } else {
+        console.error("❌ URL에 token 파라미터가 없습니다.");
+        console.error("❌ 세션 쿠키가 제대로 설정되지 않았을 수 있습니다.");
+        alert("로그인에 실패했습니다. 세션 쿠키가 설정되지 않았습니다.");
+        window.history.replaceState({}, "", window.location.pathname);
+        return { success: false, error: { message: "세션 설정 실패" } };
+      }
+    }
+
+    // 최종 확인
+    if (!user || !user.id || !user.email) {
+      console.error("❌ 사용자 정보를 가져올 수 없습니다.");
+      console.error("❌ 세션 쿠키가 제대로 설정되지 않았을 수 있습니다.");
+      alert("로그인에 실패했습니다. 세션 쿠키가 설정되지 않았습니다.");
+      window.history.replaceState({}, "", window.location.pathname);
+      return { success: false, error: { message: "사용자 정보 조회 실패" } };
+    }
+
+    console.log("✅ 로그인 완료:", user);
+
+    // URL에서 success 및 token 파라미터 제거
+    window.history.replaceState({}, "", window.location.pathname);
+
+    return { success: true, user };
+  }
+
+  // 프론트엔드 직접 호출 방식: token 파라미터가 있으면 verify-api 호출
   if (token) {
     try {
       console.log("🔐 매직링크 토큰 검증 시작:", token);
