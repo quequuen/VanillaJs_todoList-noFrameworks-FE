@@ -3,6 +3,10 @@
     {
       "source": "/api/:path*",
       "destination": "https://vanillajs-todolist-noframeworks-be.onrender.com/api/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
