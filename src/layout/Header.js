@@ -28,17 +28,6 @@ const Header = () => {
         }
       </nav>
     </div>
-    <!-- <div class="w-20 fixed right-5 top-6">
-      ${
-        authenticated
-          ? `
-            <div class="flex items-center gap-2">
-              <button id="logoutBtn" class="text-sm text-gray-600 hover:text-blue-700">Logout</button>
-            </div>
-          `
-          : `<button id="loginBtn" class="text-sm text-gray-600 hover:text-blue-700">Login</button>`
-      }
-    </div> -->
   </header>
     `;
 };

@@ -20,20 +20,43 @@ async function render() {
     // 페이지 컴포넌트가 async 함수일 수 있으므로 await 처리
     const pageContent = await (typeof Page === "function" ? Page() : Page);
 
+    // 각 컴포넌트를 개별적으로 렌더링하여 에러 위치 파악
+    let headerContent = "";
+    let dMinusThreeContent = "";
+
+    try {
+      headerContent = Header();
+    } catch (error) {
+      console.error("Header 렌더링 에러:", error);
+      headerContent =
+        "<header class='w-full'><div class='p-4'>Header Error</div></header>";
+    }
+
+    try {
+      dMinusThreeContent = DMinusThree();
+    } catch (error) {
+      console.error("DMinusThree 렌더링 에러:", error);
+      dMinusThreeContent = "";
+    }
+
     $root.innerHTML = `
   <div class="max-w-[700px] mx-auto h-[100%] px-4">
-    ${Header()}
+    ${headerContent}
     ${pageContent}
-    ${DMinusThree()}
+    ${dMinusThreeContent}
   </div>
 `;
   } catch (error) {
     console.error("Render Error:", error);
+    console.error("Error stack:", error.stack);
     // 에러가 발생해도 최소한 빈 화면이라도 보여주기
     if ($root) {
       $root.innerHTML = `
         <div class="max-w-[700px] mx-auto h-[100%] px-4">
           <div class="p-4 text-red-500">화면을 렌더링하는 중 오류가 발생했습니다.</div>
+          <div class="p-4 text-gray-500 text-sm">${
+            error.message || "알 수 없는 오류"
+          }</div>
         </div>
       `;
     }
