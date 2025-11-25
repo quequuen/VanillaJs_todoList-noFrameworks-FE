@@ -69,17 +69,37 @@ const updateTodoItemEventHandler = async (e) => {
   // 명세서: PUT /api/todo/:id는 content, deadLine, isDone을 모두 받을 수 있음
   try {
     // 날짜 형식 확인: input type="date"는 YYYY-MM-DD 형식으로 반환됨
+    // 하지만 응답에서 받은 ISO 8601 형식이 그대로 들어올 수 있으므로 변환 필요
+    let formattedDeadLine = deadLine;
+    if (deadLine && deadLine.includes("T")) {
+      // ISO 8601 형식 (2025-11-25T00:00:00.000Z) → YYYY-MM-DD
+      formattedDeadLine = deadLine.split("T")[0];
+    }
+
     const requestBody = {
       content,
-      deadLine, // YYYY-MM-DD 형식
+      deadLine: formattedDeadLine, // YYYY-MM-DD 형식 보장
     };
 
-    // isDone이 있으면 포함 (선택적 필드)
-    if (isDone) {
+    // isDone이 있으면 포함 (선택적 필드, 'Y' 또는 'N')
+    if (isDone && (isDone === "Y" || isDone === "N")) {
       requestBody.isDone = isDone;
     }
 
+    console.log("📤 Update Todo Request:", {
+      id,
+      requestBody,
+      originalDeadLine: deadLine,
+      formattedDeadLine,
+      isDone,
+    });
+
     const response = await updateTodo(id, requestBody);
+
+    console.log("✅ Update Todo Response:", {
+      status: response.status,
+      data: response.data,
+    });
 
     const updatedTodo = response?.data;
 
@@ -109,6 +129,22 @@ const updateTodoItemEventHandler = async (e) => {
     );
     setTodoStoreByUpdatedTodoItem(updatedTodos);
   } catch (error) {
+    // 400 에러 시 상세 정보 로깅
+    if (error.response?.status === 400) {
+      console.error("❌ 400 Bad Request 상세:", {
+        status: error.response.status,
+        data: error.response.data,
+        requestBody: {
+          id,
+          content,
+          deadLine,
+          formattedDeadLine,
+          isDone,
+        },
+        errorMessage:
+          error.response.data?.message || error.response.data?.error,
+      });
+    }
     handleTodoError(error);
     return;
   }
