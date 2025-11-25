@@ -35,23 +35,25 @@ async function main() {
   //   console.error("❌ 매직링크 토큰 처리 중 에러:", err);
   // }
 
-  // // 매직링크 토큰이 처리되지 않은 경우에만 getCurrentUser 호출
-  // // (일반적인 앱 시작 시 로그인 상태 확인)
-  // if (!magicLinkProcessed) {
-  //   // 앱 시작 시 항상 로그인 상태 확인 및 todos 가져오기
-  //   // getCurrentUser 내부에서 setUser, fetchTodosFromDB, clearUser를 자동으로 처리함
-  //   // 에러가 발생해도 조용히 처리하고 화면은 정상적으로 렌더링
-  //   try {
-  //     const { getCurrentUser } = await import("./utils/auth.js");
-  //     await getCurrentUser();
-  //   } catch (err) {
-  //     // getCurrentUser 내부에서 이미 clearUser와 alert를 호출하므로
-  //     // 여기서는 추가 처리만 수행
-  //     console.error("❌ 사용자 정보 조회 중 예상치 못한 에러:", err);
-  //     const { clearUser } = await import("./utils/auth.js");
-  //     await clearUser();
-  //   }
-  // }
+  // 앱 시작 시 DB에서 todos 가져오기 (로그인 없이)
+  try {
+    const { getTodos } = await import("../api/todos.js");
+    const response = await getTodos();
+    const todos = response?.data || [];
+
+    // todos가 배열인지 확인
+    if (Array.isArray(todos)) {
+      globalStore.setState({ posts: todos });
+      console.log("✅ DB에서 todos 가져오기 성공:", todos.length, "개");
+    } else {
+      console.warn("⚠️ DB 응답이 배열이 아닙니다:", todos);
+      globalStore.setState({ posts: [] });
+    }
+  } catch (err) {
+    console.error("❌ DB에서 todos 가져오기 실패:", err);
+    // 에러 발생 시 빈 배열로 초기화
+    globalStore.setState({ posts: [] });
+  }
 
   // 라우터와 스토어 구독 설정
   router.get().subscribe(render);

@@ -1,5 +1,4 @@
 import { globalStore } from "../stores/globalStore";
-import { isAuthenticated } from "../utils/auth";
 import { createTodo } from "../../api/todos";
 import getDate from "../utils/getDate";
 import { handleTodoError } from "../utils/errorHandler";
@@ -70,51 +69,40 @@ const addTodoItemEventHandler = async (e) => {
 
   if (!isValidFormForAdd(date, content)) return;
 
-  const newTodo = createTodoItem(todos.length + 1, date, content);
+  // 항상 DB에 저장 (API 호출)
+  try {
+    const response = await createTodo({
+      deadLine: date,
+      content: content,
+    });
 
-  // 로그인 상태에 따라 분기
-  if (isAuthenticated()) {
-    // 로그인 상태 → DB에 저장 (API 호출)
-    try {
-      const response = await createTodo({
-        deadLine: date,
-        content: content,
-      });
+    const savedTodo = response?.data;
 
-      const savedTodo = response?.data;
-
-      // 응답 데이터가 유효한지 확인
-      if (!savedTodo || typeof savedTodo !== "object") {
-        console.error(
-          "❌ 백엔드 응답 형식이 올바르지 않습니다:",
-          response?.data
-        );
-        alert(
-          "Todo 추가는 성공했지만 데이터를 불러오는데 실패했습니다. 페이지를 새로고침해주세요."
-        );
-        // 에러 발생 시에도 폼은 초기화
-        resetTodoForm($date, $content);
-        return;
-      }
-
-      // 백엔드 응답 필드를 프론트엔드 형식에 맞게 매핑
-      // 백엔드가 다른 필드명을 사용할 수 있으므로 안전하게 처리
-      const mappedTodo = {
-        id: savedTodo.id,
-        deadLine: savedTodo.deadLine || savedTodo.deadline || date,
-        content: savedTodo.content || savedTodo.title || content,
-        creation: savedTodo.creation || savedTodo.createdAt || getDate(),
-        isDone: savedTodo.isDone || savedTodo.is_done || "N",
-      };
-
-      setTodoStoreByAddTodoItem(mappedTodo);
-    } catch (error) {
-      handleTodoError(error);
+    // 응답 데이터가 유효한지 확인
+    if (!savedTodo || typeof savedTodo !== "object") {
+      console.error("❌ 백엔드 응답 형식이 올바르지 않습니다:", response?.data);
+      alert(
+        "Todo 추가는 성공했지만 데이터를 불러오는데 실패했습니다. 페이지를 새로고침해주세요."
+      );
+      // 에러 발생 시에도 폼은 초기화
+      resetTodoForm($date, $content);
       return;
     }
-  } else {
-    // 비로그인 상태 → 로컬에만 저장 (기존 방식)
-    setTodoStoreByAddTodoItem(newTodo);
+
+    // 백엔드 응답 필드를 프론트엔드 형식에 맞게 매핑
+    // 백엔드가 다른 필드명을 사용할 수 있으므로 안전하게 처리
+    const mappedTodo = {
+      id: savedTodo.id,
+      deadLine: savedTodo.deadLine || savedTodo.deadline || date,
+      content: savedTodo.content || savedTodo.title || content,
+      creation: savedTodo.creation || savedTodo.createdAt || getDate(),
+      isDone: savedTodo.isDone || savedTodo.is_done || "N",
+    };
+
+    setTodoStoreByAddTodoItem(mappedTodo);
+  } catch (error) {
+    handleTodoError(error);
+    return;
   }
 
   resetTodoForm($date, $content);

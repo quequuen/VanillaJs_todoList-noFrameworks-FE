@@ -1,5 +1,4 @@
 import { globalStore } from "../stores/globalStore";
-import { isAuthenticated } from "../utils/auth";
 import { toggleTodo } from "../../api/todos";
 import sortTodosToPath from "../utils/sortTodosToPath";
 import { handleTodoError } from "../utils/errorHandler";
@@ -27,48 +26,38 @@ const changeCheckBoxEventHandler = async (e) => {
     .closest(".todo")
     .querySelector('input[type="hidden"]').value;
 
-  // 로그인 상태에 따라 분기
-  if (isAuthenticated()) {
-    // 로그인 상태 → DB에 토글 저장 (API 호출)
-    try {
-      const response = await toggleTodo(id);
+  // 항상 DB에 토글 저장 (API 호출)
+  try {
+    const response = await toggleTodo(id);
 
-      const updatedTodo = response?.data;
+    const updatedTodo = response?.data;
 
-      // 응답 데이터가 유효한지 확인
-      if (!updatedTodo || typeof updatedTodo !== "object") {
-        console.error(
-          "❌ 백엔드 응답 형식이 올바르지 않습니다:",
-          response?.data
-        );
-        alert(
-          "Todo 상태 변경은 성공했지만 데이터를 불러오는데 실패했습니다. 페이지를 새로고침해주세요."
-        );
-        return;
-      }
-
-      // 백엔드 응답 필드를 프론트엔드 형식에 맞게 매핑
-      const mappedTodo = {
-        id: updatedTodo.id,
-        deadLine: updatedTodo.deadLine || updatedTodo.deadline,
-        content: updatedTodo.content || updatedTodo.title,
-        creation: updatedTodo.creation || updatedTodo.createdAt,
-        isDone: updatedTodo.isDone || updatedTodo.is_done,
-      };
-
-      const updatedTodos = todos.map((todo) =>
-        todo.id === id ? mappedTodo : todo
+    // 응답 데이터가 유효한지 확인
+    if (!updatedTodo || typeof updatedTodo !== "object") {
+      console.error("❌ 백엔드 응답 형식이 올바르지 않습니다:", response?.data);
+      alert(
+        "Todo 상태 변경은 성공했지만 데이터를 불러오는데 실패했습니다. 페이지를 새로고침해주세요."
       );
-      const sortedTodos = sortTodosToPath(updatedTodos);
-      globalStore.setState({ posts: sortedTodos });
-    } catch (error) {
-      handleTodoError(error);
       return;
     }
-  } else {
-    // 비로그인 상태 → 로컬에만 저장 (기존 방식)
-    const updatedTodo = getUpdatedTodoForCheckBoxById(todos, id);
-    updateCheckBoxStatus(todos, updatedTodo);
+
+    // 백엔드 응답 필드를 프론트엔드 형식에 맞게 매핑
+    const mappedTodo = {
+      id: updatedTodo.id,
+      deadLine: updatedTodo.deadLine || updatedTodo.deadline,
+      content: updatedTodo.content || updatedTodo.title,
+      creation: updatedTodo.creation || updatedTodo.createdAt,
+      isDone: updatedTodo.isDone || updatedTodo.is_done,
+    };
+
+    const updatedTodos = todos.map((todo) =>
+      todo.id === id ? mappedTodo : todo
+    );
+    const sortedTodos = sortTodosToPath(updatedTodos);
+    globalStore.setState({ posts: sortedTodos });
+  } catch (error) {
+    handleTodoError(error);
+    return;
   }
 };
 export default changeCheckBoxEventHandler;
