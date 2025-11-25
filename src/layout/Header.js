@@ -1,19 +1,19 @@
 import getDate from "../utils/getDate";
 import getPath from "../utils/getPath";
-import { isAuthenticated, getUser } from "../utils/auth";
+// import { isAuthenticated, getUser } from "../utils/auth";
 import { addEvent } from "../utils/eventUtil";
-import showLoginModalEventHandler from "../features/auth/showLoginModalEventHandler";
-import logoutEventHandler from "../features/auth/logoutEventHandler";
+// import showLoginModalEventHandler from "../features/auth/showLoginModalEventHandler";
+// import logoutEventHandler from "../features/auth/logoutEventHandler";
 
 const Header = () => {
   const currentPath = getPath();
   const isHome = currentPath === "/";
   const today = getDate();
-  const authenticated = isAuthenticated();
-  const user = getUser();
+  // const authenticated = isAuthenticated();
+  // const user = getUser();
 
-  addEvent("click", "#loginBtn", showLoginModalEventHandler);
-  addEvent("click", "#logoutBtn", logoutEventHandler);
+  // addEvent("click", "#loginBtn", showLoginModalEventHandler);
+  // addEvent("click", "#logoutBtn", logoutEventHandler);
 
   return `
   <header class="w-full">
@@ -28,7 +28,7 @@ const Header = () => {
         }
       </nav>
     </div>
-    <div class="w-20 fixed right-5 top-6">
+    <!-- <div class="w-20 fixed right-5 top-6">
       ${
         authenticated
           ? `
@@ -38,7 +38,7 @@ const Header = () => {
           `
           : `<button id="loginBtn" class="text-sm text-gray-600 hover:text-blue-700">Login</button>`
       }
-    </div>
+    </div> -->
   </header>
     `;
 };
