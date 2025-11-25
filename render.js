@@ -9,17 +9,21 @@ addEvent("click", "[data-link]", (e) => {
   router.get().push(e.target.href.replace(window.location.origin, ""));
 });
 
-function render() {
+async function render() {
   console.log("render");
   const $root = document.getElementById("root");
   try {
     const Page = router.get().getTarget() ?? NotFoundPage;
     // 일치하는 컴포넌트가 없을 시 NotFoundPage 를 Page에 저장
     // ??->Null, None일 때 false
+
+    // 페이지 컴포넌트가 async 함수일 수 있으므로 await 처리
+    const pageContent = await (typeof Page === "function" ? Page() : Page);
+
     $root.innerHTML = `
   <div class="max-w-[700px] mx-auto h-[100%] px-4">
     ${Header()}
-    ${Page()}
+    ${pageContent}
     ${DMinusThree()}
   </div>
 `;

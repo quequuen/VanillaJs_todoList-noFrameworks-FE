@@ -145,11 +145,15 @@ export const handleMagicLinkToken = async () => {
   if (token) {
     try {
       console.log("🔐 매직링크 토큰 검증 시작:", token);
+      console.log("🔍 verifyMagicLink 함수 import 시작...");
 
       // 프론트엔드에서 verify-api 호출
       const { verifyMagicLink } = await import("../../api/auth.js");
-      const response = await verifyMagicLink(token);
+      console.log("✅ verifyMagicLink 함수 import 완료");
+      console.log("📡 verifyMagicLink API 호출 시작...");
 
+      const response = await verifyMagicLink(token);
+      console.log("✅ verifyMagicLink API 호출 완료");
       console.log("✅ 매직링크 인증 성공:", response.data);
 
       // verify-api 호출 후 세션 쿠키가 설정되었으므로 getCurrentUser로 사용자 정보 가져오기

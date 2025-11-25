@@ -23,7 +23,17 @@ export const sendMagicLink = async (email) => {
 };
 
 export const verifyMagicLink = async (token) => {
-  return api.get(resolveEndpoint("verifyMagicLink"), { params: { token } });
+  const endpoint = resolveEndpoint("verifyMagicLink");
+  console.log("🌐 verifyMagicLink 호출:", {
+    endpoint,
+    token,
+    fullURL: `${api.defaults.baseURL}${endpoint}?token=${token}`,
+  });
+
+  const response = await api.get(endpoint, { params: { token } });
+  console.log("✅ verifyMagicLink 응답 받음:", response.status, response.data);
+
+  return response;
 };
 
 export const logout = async () => {

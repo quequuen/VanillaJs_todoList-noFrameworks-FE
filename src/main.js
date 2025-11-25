@@ -14,18 +14,25 @@ router.set(
 );
 
 async function main() {
+  console.log("🚀 main() 함수 실행 시작");
+  console.log("📍 현재 URL:", window.location.href);
+  console.log("🔍 URL 파라미터:", window.location.search);
+
   // 매직링크 토큰 처리 (프론트엔드 URL에서 token 파라미터 확인)
   // 이메일 링크: https://프론트주소/?token=xxx
+  // handleMagicLinkToken() → verify-api 호출 → 세션 생성 → getCurrentUser
   let magicLinkProcessed = false;
   try {
+    console.log("🔐 handleMagicLinkToken 호출 시작");
     const result = await handleMagicLinkToken();
     magicLinkProcessed = !!result; // token이 처리되었는지 확인
+    console.log("🔐 handleMagicLinkToken 결과:", result);
 
     if (result?.success) {
       console.log("✅ 매직링크 인증 완료");
     }
   } catch (err) {
-    console.error("매직링크 토큰 처리 중 에러:", err);
+    console.error("❌ 매직링크 토큰 처리 중 에러:", err);
   }
 
   // 매직링크 토큰이 처리되지 않은 경우에만 getCurrentUser 호출

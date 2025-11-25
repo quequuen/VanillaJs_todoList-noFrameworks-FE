@@ -29,14 +29,25 @@ api.interceptors.request.use(
   (config) => {
     devLogger.api(config.method.toUpperCase(), config.url, config.data);
 
-    // 쿠키 확인 (개발 모드에서만)
-    if (import.meta.env.DEV || import.meta.env.MODE === "development") {
-      const cookies = document.cookie;
-      if (cookies) {
-        console.log("🍪 Request Cookies:", cookies);
-      } else {
-        console.warn("⚠️ Request에 쿠키가 없습니다.");
-      }
+    // 요청 헤더 및 Origin 확인
+    console.log("📤 Request Headers:", {
+      url: config.url,
+      baseURL: config.baseURL,
+      fullURL: `${config.baseURL}${config.url}`,
+      method: config.method?.toUpperCase(),
+      withCredentials: config.withCredentials,
+      headers: config.headers,
+      origin: window.location.origin,
+      hostname: window.location.hostname,
+      isUsingProxy: isUsingProxy(),
+    });
+
+    // 쿠키 확인
+    const cookies = document.cookie;
+    if (cookies) {
+      console.log("🍪 Request Cookies:", cookies);
+    } else {
+      console.warn("⚠️ Request에 쿠키가 없습니다.");
     }
 
     return config;
@@ -52,6 +63,24 @@ api.interceptors.response.use(
   (response) => {
     devLogger.apiResponse(response.config.url, response.data);
 
+    // CORS 헤더 확인
+    console.log("📥 Response Headers:", {
+      url: response.config.url,
+      status: response.status,
+      headers: {
+        "access-control-allow-origin":
+          response.headers["access-control-allow-origin"],
+        "access-control-allow-credentials":
+          response.headers["access-control-allow-credentials"],
+        "access-control-allow-methods":
+          response.headers["access-control-allow-methods"],
+        "access-control-allow-headers":
+          response.headers["access-control-allow-headers"],
+        "set-cookie": response.headers["set-cookie"] ? "있음" : "없음",
+      },
+      allHeaders: Object.keys(response.headers),
+    });
+
     // Set-Cookie 헤더 확인
     const setCookieHeader = response.headers["set-cookie"];
     if (setCookieHeader) {
@@ -63,6 +92,12 @@ api.interceptors.response.use(
       });
     } else {
       console.warn("⚠️ Set-Cookie 헤더가 없습니다.");
+      console.warn("⚠️ CORS 헤더 확인:", {
+        "access-control-allow-origin":
+          response.headers["access-control-allow-origin"],
+        "access-control-allow-credentials":
+          response.headers["access-control-allow-credentials"],
+      });
     }
 
     // 쿠키 저장 확인
