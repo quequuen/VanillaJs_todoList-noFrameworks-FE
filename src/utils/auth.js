@@ -156,8 +156,30 @@ export const handleMagicLinkToken = async () => {
       console.log("✅ verifyMagicLink API 호출 완료");
       console.log("✅ 매직링크 인증 성공:", response.data);
 
+      // verify-api 호출 후 세션 쿠키가 설정될 시간을 기다림
+      // 브라우저가 Set-Cookie 헤더를 처리하고 쿠키를 저장하는데 시간이 필요함
+      console.log("⏳ 쿠키 설정 대기 중...");
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // 쿠키 확인
+      const cookies = document.cookie;
+      console.log("🍪 쿠키 확인:", {
+        cookies: cookies || "쿠키 없음",
+        hasSessionId: cookies?.includes("sessionId"),
+      });
+
+      if (!cookies || !cookies.includes("sessionId")) {
+        console.error("❌ 세션 쿠키가 설정되지 않았습니다!");
+        console.error(
+          "❌ 백엔드에서 Set-Cookie 헤더를 보내지 않았거나, CORS 설정 문제일 수 있습니다."
+        );
+        alert("로그인에 실패했습니다. 세션 쿠키가 설정되지 않았습니다.");
+        return { success: false, error: { message: "세션 쿠키 설정 실패" } };
+      }
+
       // verify-api 호출 후 세션 쿠키가 설정되었으므로 getCurrentUser로 사용자 정보 가져오기
       // getCurrentUser 내부에서 setUser, fetchTodosFromDB를 자동으로 처리함
+      console.log("👤 getCurrentUser 호출 시작...");
       const user = await getCurrentUser();
 
       if (!user || !user.id || !user.email) {

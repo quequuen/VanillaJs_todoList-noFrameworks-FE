@@ -64,6 +64,11 @@ api.interceptors.response.use(
     devLogger.apiResponse(response.config.url, response.data);
 
     // CORS 헤더 확인
+    const allResponseHeaders = {};
+    for (const key in response.headers) {
+      allResponseHeaders[key] = response.headers[key];
+    }
+
     console.log("📥 Response Headers:", {
       url: response.config.url,
       status: response.status,
@@ -79,6 +84,7 @@ api.interceptors.response.use(
         "set-cookie": response.headers["set-cookie"] ? "있음" : "없음",
       },
       allHeaders: Object.keys(response.headers),
+      allHeadersWithValues: allResponseHeaders,
     });
 
     // Set-Cookie 헤더 확인
