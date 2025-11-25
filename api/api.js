@@ -6,6 +6,12 @@ import devLogger from "../src/utils/logger.js";
 // 개발: VITE_API_BASE_URL 또는 localhost 사용
 export const isUsingProxy = () => {
   if (typeof window === "undefined") return false;
+
+  // 프록시 우회 옵션 (환경변수로 제어 가능)
+  if (import.meta.env.VITE_USE_DIRECT_API === "true") {
+    return false;
+  }
+
   return (
     import.meta.env.PROD || window.location.hostname.includes("vercel.app")
   );
@@ -15,8 +21,11 @@ const getBaseURL = () => {
   if (isUsingProxy()) {
     return "/api"; // 상대 경로로 설정하여 프록시 사용
   }
-  // 개발 환경
-  return import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+  // 개발 환경 또는 프록시 우회 시
+  return (
+    import.meta.env.VITE_API_BASE_URL ||
+    "https://vanillajs-todolist-noframeworks-be.onrender.com"
+  );
 };
 
 const api = axios.create({
@@ -80,9 +89,15 @@ api.interceptors.response.use(
       allResponseHeaders[key] = response.headers[key];
     }
 
+    const isProxy = isUsingProxy();
+    const hasSetCookie = !!response.headers["set-cookie"];
+
     console.log("📥 Response Headers:", {
       url: response.config.url,
+      baseURL: response.config.baseURL,
+      fullURL: `${response.config.baseURL}${response.config.url}`,
       status: response.status,
+      isUsingProxy: isProxy,
       headers: {
         "access-control-allow-origin":
           response.headers["access-control-allow-origin"],
@@ -92,11 +107,27 @@ api.interceptors.response.use(
           response.headers["access-control-allow-methods"],
         "access-control-allow-headers":
           response.headers["access-control-allow-headers"],
-        "set-cookie": response.headers["set-cookie"] ? "있음" : "없음",
+        "set-cookie": hasSetCookie ? "있음" : "없음",
       },
       allHeaders: Object.keys(response.headers),
       allHeadersWithValues: allResponseHeaders,
     });
+
+    // Vercel 프록시 사용 시 Set-Cookie 확인
+    if (isProxy && !hasSetCookie) {
+      console.error(
+        "❌ Vercel 프록시 사용 중이지만 Set-Cookie 헤더가 없습니다!"
+      );
+      console.error(
+        "❌ Vercel 프록시가 Set-Cookie 헤더를 전달하지 않을 수 있습니다."
+      );
+      console.error("❌ 해결 방법:");
+      console.error("   1. vercel.json의 rewrites 설정 확인");
+      console.error(
+        "   2. 백엔드에서 Set-Cookie 헤더가 실제로 전송되는지 확인"
+      );
+      console.error("   3. 직접 백엔드로 요청하는 옵션 고려");
+    }
 
     // Set-Cookie 헤더 확인
     const setCookieHeader = response.headers["set-cookie"];
@@ -106,6 +137,10 @@ api.interceptors.response.use(
         header: setCookieHeader,
         isArray: Array.isArray(setCookieHeader),
         length: Array.isArray(setCookieHeader) ? setCookieHeader.length : 1,
+        isProxy: isProxy,
+        note: isProxy
+          ? "Vercel 프록시를 통해 Set-Cookie 헤더가 전달되었습니다."
+          : "직접 백엔드로 요청하여 Set-Cookie 헤더를 받았습니다.",
       });
     } else {
       console.warn("⚠️ Set-Cookie 헤더가 없습니다.");
@@ -114,7 +149,17 @@ api.interceptors.response.use(
           response.headers["access-control-allow-origin"],
         "access-control-allow-credentials":
           response.headers["access-control-allow-credentials"],
+        isProxy: isProxy,
       });
+
+      // 프록시 사용 시 추가 경고
+      if (isProxy) {
+        console.error("❌ Vercel 프록시 사용 중 Set-Cookie 헤더 누락!");
+        console.error(
+          "❌ 이는 Vercel 프록시가 Set-Cookie 헤더를 전달하지 않는 문제일 수 있습니다."
+        );
+        console.error("❌ Network 탭에서 실제 응답 헤더를 확인하세요.");
+      }
     }
 
     // 쿠키 저장 확인
